@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    @apply h-full overflow-x-hidden;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    /* Handle safe areas for mobile notches */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Custom scrollbar for a cleaner look */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
+  }
+}
+
+@layer components {
+  .mobile-bottom-sheet {
+    @apply fixed inset-x-0 bottom-0 z-[100] bg-white rounded-t-[2rem] shadow-2xl md:relative md:inset-auto md:rounded-2xl md:shadow-xl;
+  }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}

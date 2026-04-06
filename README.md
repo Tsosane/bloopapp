@@ -1,11 +1,41 @@
-<div align="center">
+# Blood Suite: Smart Blood Bank & Donor Management System
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Blood Suite is a comprehensive platform designed to address blood shortages and improve management efficiency in Lesotho. It leverages real-time tracking, AI-powered forecasting, and a responsive mobile-first design to connect donors, hospitals, and blood banks.
 
-  <h1>Built with AI Studio</h2>
+## Key Features
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Donor App**: 
+  - Real-time notifications for urgent blood needs.
+  - Eligibility tracking (56-day rule).
+  - Donation history and profile management.
+- **Hospital Portal**:
+  - Real-time inventory tracking (FEFO algorithm).
+  - Urgent blood request module.
+  - Proximity-based donor matching (Haversine formula).
+- **Admin Dashboard**:
+  - System-wide analytics.
+  - AI-powered demand forecasting (Gemini AI).
+- **AI/ML Module**:
+  - Uses Gemini AI to predict blood demand based on historical trends.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Tools & Technologies
 
-</div>
+- **Frontend**: React 19, Tailwind CSS 4, Lucide Icons, Recharts, Motion.
+- **Backend/Database**: Firebase (Firestore, Authentication).
+- **AI**: Google Gemini AI (@google/genai).
+- **Routing**: React Router DOM.
+- **Date Utilities**: date-fns.
+
+## HCI Principles Applied
+
+- **Visibility of System Status**: Real-time dashboards and clear status badges.
+- **User Control & Freedom**: Easy navigation and clear "Sign Out" options.
+- **Consistency & Standards**: Standard medical icons and color coding (Red for blood/emergency).
+- **Error Prevention**: Form validation and clear eligibility indicators.
+- **Aesthetic & Minimalist Design**: Clean, modern UI with focus on critical information.
+
+## Project Team
+
+- Thipe David Relebohile (202101682)
+- Mohaka Ts’osane (202201986)
+- Supervisor: Mr Sekese

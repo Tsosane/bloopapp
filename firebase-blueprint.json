@@ -1,0 +1,142 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Base user profile for authentication and role management.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "hospital", "donor"] },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Donor": {
+      "title": "Donor",
+      "description": "Extended profile for blood donors.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "bloodType": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+        "lastDonationDate": { "type": "string", "format": "date-time" },
+        "isEligible": { "type": "boolean" },
+        "donationCount": { "type": "integer" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        },
+        "phoneNumber": { "type": "string" }
+      },
+      "required": ["userId", "bloodType"]
+    },
+    "Hospital": {
+      "title": "Hospital",
+      "description": "Profile for registered hospitals.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "licenseNumber": { "type": "string" },
+        "address": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" }
+          }
+        },
+        "isApproved": { "type": "boolean" }
+      },
+      "required": ["userId", "name"]
+    },
+    "BloodInventory": {
+      "title": "Blood Inventory",
+      "description": "Individual blood units in stock.",
+      "type": "object",
+      "properties": {
+        "hospitalId": { "type": "string" },
+        "bloodType": { "type": "string" },
+        "quantity_ml": { "type": "integer" },
+        "collectionDate": { "type": "string", "format": "date-time" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["available", "reserved", "used", "expired"] }
+      },
+      "required": ["hospitalId", "bloodType", "expiryDate"]
+    },
+    "BloodRequest": {
+      "title": "Blood Request",
+      "description": "Hospital requests for blood units.",
+      "type": "object",
+      "properties": {
+        "hospitalId": { "type": "string" },
+        "bloodType": { "type": "string" },
+        "quantity_ml": { "type": "integer" },
+        "urgency": { "type": "string", "enum": ["routine", "urgent", "emergency"] },
+        "status": { "type": "string", "enum": ["pending", "processing", "fulfilled", "cancelled"] },
+        "patientName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hospitalId", "bloodType", "urgency"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System alerts for users.",
+      "type": "object",
+      "properties": {
+        "recipientId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["emergency", "eligibility", "inventory", "system"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipientId", "title", "message"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Scheduled blood donations.",
+      "type": "object",
+      "properties": {
+        "donorId": { "type": "string" },
+        "hospitalId": { "type": "string" },
+        "hospitalName": { "type": "string" },
+        "scheduledAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["donorId", "hospitalId", "scheduledAt"]
+    },
+    "Feedback": {
+      "title": "Feedback",
+      "description": "Donor feedback after donation.",
+      "type": "object",
+      "properties": {
+        "appointmentId": { "type": "string" },
+        "donorId": { "type": "string" },
+        "donorName": { "type": "string" },
+        "hospitalId": { "type": "string" },
+        "hospitalName": { "type": "string" },
+        "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["appointmentId", "donorId", "rating"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/donors/{donorId}": { "schema": "Donor", "description": "Donor specific data" },
+    "/hospitals/{hospitalId}": { "schema": "Hospital", "description": "Hospital specific data" },
+    "/inventory/{unitId}": { "schema": "BloodInventory", "description": "Blood inventory units" },
+    "/requests/{requestId}": { "schema": "BloodRequest", "description": "Blood requests from hospitals" },
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "User notifications" },
+    "/appointments/{appointmentId}": { "schema": "Appointment", "description": "Scheduled donations" },
+    "/feedbacks/{feedbackId}": { "schema": "Feedback", "description": "Donor feedback" }
+  }
+}

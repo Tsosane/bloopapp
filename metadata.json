@@ -1,0 +1,5 @@
+{
+  "name": "Blood Suite",
+  "description": "A Smart Blood Bank and Donor Management System for Lesotho, featuring real-time inventory tracking, AI-powered demand forecasting, and donor mobilization.",
+  "requestFramePermissions": ["geolocation", "notifications"]
+}
