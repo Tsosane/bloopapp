@@ -89,7 +89,7 @@ import {
   DonationAppointment
 } from './types';
 import { forecastBloodDemand } from './services/geminiService';
-import { broadcastUrgentRequest } from './services/notificationService';
+import { broadcastUrgentRequest, calculateDistance } from './services/notificationService';
 
 // --- Components ---
 
@@ -311,8 +311,31 @@ const Login = () => {
     location: '',
     hospitalName: '',
     licenseNumber: '',
-    address: ''
+    address: '',
+    locationCoords: null as { latitude: number, longitude: number } | null
   });
+
+  const requestLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setRegData(prev => ({
+            ...prev,
+            locationCoords: {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }
+          }));
+        },
+        (err) => {
+          console.error("Error getting location:", err);
+          setError("Could not get your location. Please check browser permissions.");
+        }
+      );
+    } else {
+      setError("Geolocation is not supported by your browser.");
+    }
+  };
 
   const handleGoogleLogin = async (isRegistration = false, role: UserRole = 'donor') => {
     if (isRegistration) {
@@ -354,6 +377,7 @@ const Login = () => {
             bloodType: isRegistration ? regData.bloodType : 'O+',
             phoneNumber: isRegistration ? regData.phoneNumber : '',
             locationName: isRegistration ? regData.location : '',
+            location: regData.locationCoords,
             isEligible: true,
             donationCount: 0,
             createdAt: new Date().toISOString()
@@ -365,6 +389,7 @@ const Login = () => {
             name: regData.hospitalName,
             licenseNumber: regData.licenseNumber,
             address: regData.address,
+            location: regData.locationCoords,
             isApproved: false, // Needs admin approval
             createdAt: new Date().toISOString()
           });
@@ -474,13 +499,24 @@ const Login = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Location (Optional)</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
-                  placeholder="Maseru"
-                  value={regData.location}
-                  onChange={(e) => setRegData({...regData, location: e.target.value})}
-                />
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
+                    placeholder="Maseru"
+                    value={regData.location}
+                    onChange={(e) => setRegData({...regData, location: e.target.value})}
+                  />
+                  <button 
+                    type="button"
+                    onClick={requestLocation}
+                    className={`p-2 rounded-lg border transition-all ${regData.locationCoords ? 'bg-green-50 border-green-200 text-green-600' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
+                    title="Use Current Location"
+                  >
+                    <MapPin className="w-5 h-5" />
+                  </button>
+                </div>
+                {regData.locationCoords && <p className="text-[10px] text-green-600 mt-1 font-medium flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Coordinates captured</p>}
               </div>
             </div>
             <Button 
@@ -525,14 +561,25 @@ const Login = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
-              <input 
-                type="text" 
-                required
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
-                placeholder="123 Kingsway, Maseru"
-                value={regData.address}
-                onChange={(e) => setRegData({...regData, address: e.target.value})}
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  required
+                  className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
+                  placeholder="123 Kingsway, Maseru"
+                  value={regData.address}
+                  onChange={(e) => setRegData({...regData, address: e.target.value})}
+                />
+                <button 
+                  type="button"
+                  onClick={requestLocation}
+                  className={`p-2 rounded-lg border transition-all ${regData.locationCoords ? 'bg-green-50 border-green-200 text-green-600' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
+                  title="Use Current Location"
+                >
+                  <MapPin className="w-5 h-5" />
+                </button>
+              </div>
+              {regData.locationCoords && <p className="text-[10px] text-green-600 mt-1 font-medium flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Coordinates captured</p>}
             </div>
             <div className="p-3 bg-amber-50 text-amber-800 rounded-lg text-xs">
               <p className="font-bold mb-1 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Verification Required</p>
@@ -599,8 +646,31 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
     );
 
     const unsubscribeNotif = onSnapshot(notifQ, (snapshot) => {
-      setNotifications(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppNotification)));
+      const newNotifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppNotification));
+      
+      setNotifications(prev => {
+        // Check for new critical notifications to trigger browser alert
+        if (newNotifs.length > 0 && prev.length > 0) {
+          const latest = newNotifs[0];
+          const oldLatest = prev[0];
+          
+          if (latest.id !== oldLatest.id && !latest.isRead && (latest.priority === 'critical' || latest.priority === 'high')) {
+            if (window.Notification && Notification.permission === "granted") {
+              new Notification(latest.title, {
+                body: latest.message,
+                tag: latest.id
+              });
+            }
+          }
+        }
+        return newNotifs;
+      });
     });
+
+    // Request notification permission
+    if (window.Notification && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
 
     return () => {
       unsubscribe();
@@ -860,7 +930,8 @@ const ScheduleDonationPage = ({ user, donorProfile }: { user: FirebaseUser, dono
   const [date, setDate] = useState<string>(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
   const [time, setTime] = useState<string>('09:00');
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [appointmentDetails, setAppointmentDetails] = useState<{ hospitalName: string, date: string, time: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -909,46 +980,18 @@ const ScheduleDonationPage = ({ user, donorProfile }: { user: FirebaseUser, dono
         createdAt: new Date().toISOString()
       });
       
-      setSubmitted(true);
+      setAppointmentDetails({
+        hospitalName: hospital?.name || 'Unknown Hospital',
+        date,
+        time
+      });
+      setShowSuccessModal(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="max-w-md mx-auto text-center py-12">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 className="w-10 h-10 text-green-600" />
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Donation Scheduled!</h1>
-        <p className="text-gray-600 mb-8">
-          Thank you for your commitment. Your appointment has been successfully booked.
-        </p>
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-8 text-left">
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Date</span>
-              <span className="font-medium">{format(new Date(date), 'MMMM dd, yyyy')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Time</span>
-              <span className="font-medium">{time}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Location</span>
-              <span className="font-medium">{hospitals.find(h => h.userId === selectedHospital)?.name}</span>
-            </div>
-          </div>
-        </div>
-        <Link to="/">
-          <Button variant="outline" className="w-full">Back to Dashboard</Button>
-        </Link>
-      </div>
-    );
-  }
 
   const daysSinceLastDonation = donorProfile?.lastDonationDate 
     ? differenceInDays(new Date(), new Date(donorProfile.lastDonationDate))
@@ -982,6 +1025,11 @@ const ScheduleDonationPage = ({ user, donorProfile }: { user: FirebaseUser, dono
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <AppointmentConfirmationModal 
+        isOpen={showSuccessModal} 
+        onClose={() => setShowSuccessModal(false)} 
+        details={appointmentDetails} 
+      />
       <header>
         <h1 className="text-2xl font-bold text-gray-900">Schedule a Donation</h1>
         <p className="text-gray-500">Choose a convenient time and location to save a life.</p>
@@ -1227,9 +1275,67 @@ const DonorProfilePage = ({ user, donorProfile, onUpdate }: { user: FirebaseUser
   );
 };
 
-import { broadcastUrgentRequest } from './services/notificationService';
-
 // --- Feedback Components ---
+
+const AppointmentConfirmationModal = ({ 
+  isOpen, 
+  onClose, 
+  details 
+}: { 
+  isOpen: boolean, 
+  onClose: () => void, 
+  details: { hospitalName: string, date: string, time: string } | null 
+}) => {
+  if (!details) return null;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+          >
+            <div className="p-8 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="w-10 h-10 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Donation Scheduled!</h2>
+              <p className="text-gray-600 mb-8">
+                Thank you for your commitment. Your appointment has been successfully booked.
+              </p>
+              
+              <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-8 text-left">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-medium">{format(new Date(details.date), 'MMMM dd, yyyy')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Time</span>
+                    <span className="font-medium">{details.time}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Location</span>
+                    <span className="font-medium">{details.hospitalName}</span>
+                  </div>
+                </div>
+              </div>
+
+              <Link to="/" onClick={onClose}>
+                <Button variant="primary" className="w-full py-3 text-lg">
+                  Back to Dashboard
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 const FeedbackModal = ({ isOpen, onClose, appointment, user, onSuccess }: { isOpen: boolean, onClose: () => void, appointment: any, user: FirebaseUser, onSuccess: (msg: string) => void }) => {
   const [rating, setRating] = useState(5);
@@ -1317,11 +1423,36 @@ const FeedbackModal = ({ isOpen, onClose, appointment, user, onSuccess }: { isOp
   );
 };
 
-const DonorDirectory = () => {
-  const [donors, setDonors] = useState<(DonorProfile & { displayName: string, email: string })[]>([]);
+const DonorDirectory = ({ hospitalProfile }: { hospitalProfile?: HospitalProfile | null }) => {
+  const [donors, setDonors] = useState<(DonorProfile & { displayName: string, email: string, distance?: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('All');
+  const [sortByProximity, setSortByProximity] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+
+  useEffect(() => {
+    if (sortByProximity && !currentLocation) {
+      if (hospitalProfile?.location) {
+        setCurrentLocation(hospitalProfile.location);
+      } else if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setCurrentLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+          },
+          (err) => {
+            console.error("Error getting location:", err);
+            setSortByProximity(false);
+          }
+        );
+      } else {
+        setSortByProximity(false);
+      }
+    }
+  }, [sortByProximity, hospitalProfile]);
 
   useEffect(() => {
     const fetchDonors = async () => {
@@ -1337,10 +1468,22 @@ const DonorDirectory = () => {
         const mergedData = donorsSnap.docs.map(doc => {
           const donorData = doc.data() as DonorProfile;
           const userData = usersMap.get(donorData.userId);
+          
+          let distance: number | undefined;
+          if (currentLocation && donorData.location) {
+            distance = calculateDistance(
+              currentLocation.latitude,
+              currentLocation.longitude,
+              donorData.location.latitude,
+              donorData.location.longitude
+            );
+          }
+
           return {
             ...donorData,
             displayName: userData?.displayName || 'Anonymous',
-            email: userData?.email || 'N/A'
+            email: userData?.email || 'N/A',
+            distance
           };
         });
 
@@ -1353,7 +1496,7 @@ const DonorDirectory = () => {
     };
 
     fetchDonors();
-  }, []);
+  }, [currentLocation]);
 
   const filteredDonors = donors.filter(donor => {
     const matchesSearch = 
@@ -1364,6 +1507,17 @@ const DonorDirectory = () => {
     const matchesBloodType = bloodTypeFilter === 'All' || donor.bloodType === bloodTypeFilter;
     
     return matchesSearch && matchesBloodType;
+  });
+
+  const sortedDonors = [...filteredDonors].sort((a, b) => {
+    if (sortByProximity) {
+      if (a.distance !== undefined && b.distance !== undefined) {
+        return a.distance - b.distance;
+      }
+      if (a.distance !== undefined) return -1;
+      if (b.distance !== undefined) return 1;
+    }
+    return 0; // Keep original order if not sorting by proximity or distances missing
   });
 
   return (
@@ -1387,15 +1541,28 @@ const DonorDirectory = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="w-full md:w-48">
-            <select 
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
-              value={bloodTypeFilter}
-              onChange={(e) => setBloodTypeFilter(e.target.value)}
+          <div className="flex gap-4">
+            <div className="w-full md:w-48">
+              <select 
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
+                value={bloodTypeFilter}
+                onChange={(e) => setBloodTypeFilter(e.target.value)}
+              >
+                <option value="All">All Blood Types</option>
+                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <button
+              onClick={() => setSortByProximity(!sortByProximity)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                sortByProximity 
+                  ? 'bg-red-50 border-red-200 text-red-600' 
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
             >
-              <option value="All">All Blood Types</option>
-              {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm font-medium">Nearby</span>
+            </button>
           </div>
         </div>
       </Card>
@@ -1406,7 +1573,7 @@ const DonorDirectory = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDonors.map(donor => (
+          {sortedDonors.map(donor => (
             <div key={donor.userId}>
               <Card className="hover:shadow-md transition-shadow h-full">
                 <div className="flex items-start gap-4">
@@ -1414,7 +1581,14 @@ const DonorDirectory = () => {
                     {donor.bloodType}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 truncate">{donor.displayName}</h3>
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-bold text-gray-900 truncate">{donor.displayName}</h3>
+                      {donor.distance !== undefined && (
+                        <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                          {donor.distance.toFixed(1)} km
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500 flex items-center gap-1 truncate">
                       <MapPin className="w-3 h-3 shrink-0" /> {donor.locationName || 'Location not set'}
                     </p>
@@ -1431,7 +1605,7 @@ const DonorDirectory = () => {
               </Card>
             </div>
           ))}
-          {filteredDonors.length === 0 && (
+          {sortedDonors.length === 0 && (
             <div className="col-span-full text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
               <User className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No donors found matching your criteria.</p>
@@ -1639,6 +1813,7 @@ const HospitalDashboard = ({ user, hospitalProfile }: { user: FirebaseUser, hosp
   const [forecast, setForecast] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [newRequest, setNewRequest] = useState({
     bloodType: 'O+',
@@ -1754,7 +1929,7 @@ const HospitalDashboard = ({ user, hospitalProfile }: { user: FirebaseUser, hosp
       
       // If urgent or emergency, broadcast to donors
       if (newRequest.urgency !== 'routine') {
-        await broadcastUrgentRequest({ id: docRef.id, ...requestData } as BloodRequest, hospitalProfile.name);
+        await broadcastUrgentRequest({ id: docRef.id, ...requestData } as BloodRequest, hospitalProfile);
       }
       
       setIsModalOpen(false);
@@ -1949,6 +2124,90 @@ const HospitalDashboard = ({ user, hospitalProfile }: { user: FirebaseUser, hosp
         )}
       </AnimatePresence>
 
+      {/* Request Details Modal */}
+      <AnimatePresence>
+        {selectedRequest && (
+          <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div 
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="bg-white rounded-t-[2rem] md:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden pb-8 md:pb-0"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-3 mb-1 md:hidden" />
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 className="text-xl font-bold">Request Details</h2>
+                <button onClick={() => setSelectedRequest(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Request ID</p>
+                    <p className="font-mono text-sm">REQ-{selectedRequest.id.slice(0, 8)}</p>
+                  </div>
+                  <Badge variant={selectedRequest.urgency === 'emergency' ? 'danger' : selectedRequest.urgency === 'urgent' ? 'warning' : 'info'}>
+                    {selectedRequest.urgency}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Blood Type</p>
+                    <p className="text-2xl font-bold text-red-600">{selectedRequest.bloodType}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Quantity</p>
+                    <p className="text-2xl font-bold text-gray-900">{selectedRequest.quantity_ml} ml</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Patient Name</p>
+                    <p className="text-lg font-medium text-gray-900">{selectedRequest.patientName || 'Not specified (Emergency/Stock)'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Current Status</p>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2.5 h-2.5 rounded-full ${
+                        selectedRequest.status === 'fulfilled' ? 'bg-green-500' : selectedRequest.status === 'pending' ? 'bg-amber-500' : 'bg-blue-500'
+                      }`} />
+                      <span className="font-medium capitalize">{selectedRequest.status}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Requested On</p>
+                    <p className="text-gray-700">{format(new Date(selectedRequest.createdAt), 'MMMM dd, yyyy • HH:mm')}</p>
+                  </div>
+                </div>
+
+                {selectedRequest.status === 'pending' && (
+                  <div className="pt-4">
+                    <Button 
+                      variant="outline" 
+                      className="w-full py-3 border-green-200 text-green-700 hover:bg-green-50"
+                      onClick={async () => {
+                        try {
+                          await updateDoc(doc(db, 'requests', selectedRequest.id), { status: 'fulfilled' });
+                          setSelectedRequest(null);
+                        } catch (error) {
+                          console.error("Error fulfilling request:", error);
+                        }
+                      }}
+                    >
+                      Mark as Fulfilled
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Low Stock Alerts */}
       {inventory.length > 0 && ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'].map(type => {
         const count = inventory.filter(i => i.bloodType === type).length;
@@ -2083,9 +2342,13 @@ const HospitalDashboard = ({ user, hospitalProfile }: { user: FirebaseUser, hosp
             </thead>
             <tbody className="divide-y divide-gray-50">
               {requests.map((req) => (
-                <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                <tr 
+                  key={req.id} 
+                  className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                  onClick={() => setSelectedRequest(req)}
+                >
                   <td className="py-4">
-                    <p className="font-medium text-gray-900">{req.patientName || 'Emergency'}</p>
+                    <p className="font-medium text-gray-900 group-hover:text-red-600 transition-colors">{req.patientName || 'Emergency'}</p>
                     <p className="text-xs text-gray-500">REQ-{req.id.slice(0,6)}</p>
                   </td>
                   <td className="py-4 font-bold text-red-600">{req.bloodType}</td>
@@ -2251,7 +2514,7 @@ export default function App() {
                     <Route path="/requests" element={<div className="p-8 text-center">Blood Requests Module</div>} />
                     <Route path="/donors" element={
                       userProfile?.role === 'admin' || userProfile?.role === 'hospital' ? (
-                        <DonorDirectory />
+                        <DonorDirectory hospitalProfile={hospitalProfile} />
                       ) : <Navigate to="/" />
                     } />
                     <Route path="/history" element={<div className="p-8 text-center">Donation History</div>} />
