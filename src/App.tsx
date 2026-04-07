@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BrowserRouter as Router, 
   Routes, 
@@ -48,6 +48,7 @@ import {
   CheckCircle2, 
   Clock, 
   Calendar,
+  Building2,
   Hospital as HospitalIcon,
   Activity,
   MapPin,
@@ -99,6 +100,7 @@ const Button = ({
   children, 
   onClick, 
   variant = 'primary', 
+  size = 'md',
   className = '', 
   disabled = false,
   type = 'button'
@@ -106,17 +108,23 @@ const Button = ({
   children: React.ReactNode, 
   onClick?: () => void, 
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost',
+  size?: 'sm' | 'md' | 'lg',
   className?: string,
   disabled?: boolean,
   type?: 'button' | 'submit' | 'reset'
 }) => {
-  const baseStyles = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  const sizeStyles = {
+    sm: "px-4 py-2 text-sm rounded-xl",
+    md: "px-6 py-3 rounded-2xl",
+    lg: "px-8 py-4 text-lg rounded-[2rem]"
+  };
+  const baseStyles = `font-display font-semibold transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${sizeStyles[size]}`;
   const variants = {
-    primary: "bg-red-600 text-white hover:bg-red-700 shadow-md hover:shadow-lg",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
-    outline: "border-2 border-red-600 text-red-600 hover:bg-red-50",
-    danger: "bg-red-100 text-red-700 hover:bg-red-200",
-    ghost: "text-gray-600 hover:bg-gray-100"
+    primary: "bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-200 hover:shadow-brand-300",
+    secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
+    outline: "border-2 border-brand-600 text-brand-600 hover:bg-brand-50",
+    danger: "bg-brand-100 text-brand-700 hover:bg-brand-200",
+    ghost: "text-slate-600 hover:bg-slate-100"
   };
 
   return (
@@ -132,7 +140,7 @@ const Button = ({
 };
 
 const Card = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-  <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 ${className}`}>
+  <div className={`bg-white rounded-[2rem] premium-shadow border border-slate-100 p-6 md:p-8 ${className}`}>
     {children}
   </div>
 );
@@ -140,12 +148,12 @@ const Card = ({ children, className = "" }: { children: React.ReactNode, classNa
 const Badge = ({ children, variant = 'info' }: { children: React.ReactNode, variant?: 'info' | 'success' | 'warning' | 'danger' }) => {
   const variants = {
     info: "bg-blue-50 text-blue-700 border-blue-100",
-    success: "bg-green-50 text-green-700 border-green-100",
+    success: "bg-emerald-50 text-emerald-700 border-emerald-100",
     warning: "bg-amber-50 text-amber-700 border-amber-100",
-    danger: "bg-red-50 text-red-700 border-red-100"
+    danger: "bg-brand-50 text-brand-700 border-brand-100"
   };
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${variants[variant]}`}>
+    <span className={`px-3 py-1 rounded-xl text-xs font-bold border ${variants[variant]}`}>
       {children}
     </span>
   );
@@ -185,10 +193,10 @@ const Toast = ({ message, type = 'success', isVisible, onClose }: { message: str
 const BottomNav = ({ role }: { role: UserRole | null }) => {
   const location = useLocation();
   const navItems = [
-    { label: 'Home', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor'] },
-    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor'] },
+    { label: 'Home', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor', 'hospital'] },
+    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor', 'hospital'] },
     { label: 'Schedule', path: '/schedule', icon: Clock, roles: ['donor'] },
-    { label: 'Profile', path: '/profile', icon: User, roles: ['donor'] },
+    { label: 'Profile', path: '/profile', icon: User, roles: ['donor', 'hospital'] },
     { label: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
   ];
 
@@ -197,20 +205,20 @@ const BottomNav = ({ role }: { role: UserRole | null }) => {
   if (!role) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-100 z-50 pb-safe">
-      <div className="flex justify-around items-center h-16 px-2">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50 pb-safe">
+      <div className="flex justify-around items-center h-20 px-2">
         {filteredItems.map(item => (
           <Link 
             key={item.path} 
             to={item.path}
-            className={`flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center gap-1.5 px-4 py-2 rounded-2xl transition-all duration-300 ${
               location.pathname === item.path 
-                ? 'text-red-600' 
-                : 'text-gray-400'
+                ? 'text-brand-600 bg-brand-50/50' 
+                : 'text-slate-400 hover:text-slate-600'
             }`}
           >
             <item.icon className={`w-6 h-6 ${location.pathname === item.path ? 'scale-110' : ''} transition-transform`} />
-            <span className="text-[10px] font-medium">{item.label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
           </Link>
         ))}
       </div>
@@ -223,41 +231,41 @@ const Navbar = ({ user, role, onSignOut }: { user: FirebaseUser | null, role: Us
   const location = useLocation();
 
   const navItems = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor'] },
-    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor'] },
+    { label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor', 'hospital'] },
+    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor', 'hospital'] },
     { label: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
     { label: 'Donors', path: '/donors', icon: User, roles: ['admin'] },
-    { label: 'Profile', path: '/profile', icon: User, roles: ['donor'] },
+    { label: 'Profile', path: '/profile', icon: User, roles: ['donor', 'hospital'] },
     { label: 'Schedule', path: '/schedule', icon: Clock, roles: ['donor'] },
     { label: 'History', path: '/history', icon: History, roles: ['donor'] },
-    { label: 'Notifications', path: '/notifications', icon: Bell, roles: ['admin', 'donor'] },
+    { label: 'Notifications', path: '/notifications', icon: Bell, roles: ['admin', 'donor', 'hospital'] },
   ];
 
   const filteredItems = navItems.filter(item => role && item.roles.includes(role));
 
   return (
-    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
-                <Droplets className="text-white w-6 h-6" />
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-12 h-12 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform">
+                <Droplets className="text-white w-7 h-7" />
               </div>
-              <span className="text-xl font-bold text-gray-900 tracking-tight">Blood<span className="text-red-600">Suite</span></span>
+              <span className="text-2xl font-display font-extrabold text-slate-900 tracking-tight">Blood<span className="text-brand-600">Suite</span></span>
             </Link>
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
             {filteredItems.map(item => (
               <Link 
                 key={item.path} 
                 to={item.path}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
                   location.pathname === item.path 
-                    ? 'text-red-600 bg-red-50' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'text-brand-600 bg-brand-50' 
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -267,23 +275,23 @@ const Navbar = ({ user, role, onSignOut }: { user: FirebaseUser | null, role: Us
               </Link>
             ))}
             {user && (
-              <div className="flex items-center gap-3 ml-4 pl-4 border-l border-gray-100">
+              <div className="flex items-center gap-4 ml-4 pl-6 border-l border-slate-100">
                 <div className="text-right hidden lg:block">
-                  <p className="text-sm font-semibold text-gray-900">{user.displayName}</p>
-                  <p className="text-xs text-gray-500 capitalize">{role}</p>
+                  <p className="text-sm font-bold text-slate-900 leading-none mb-1">{user.displayName}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{role}</p>
                 </div>
-                <button onClick={onSignOut} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                <button onClick={onSignOut} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all">
                   <LogOut className="w-5 h-5" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Mobile menu button - Hidden because we use BottomNav */}
+          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <div className="flex items-center gap-3">
               {user && (
-                <button onClick={onSignOut} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                <button onClick={onSignOut} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all">
                   <LogOut className="w-5 h-5" />
                 </button>
               )}
@@ -291,7 +299,6 @@ const Navbar = ({ user, role, onSignOut }: { user: FirebaseUser | null, role: Us
           </div>
         </div>
       </div>
-
     </nav>
   );
 };
@@ -300,6 +307,7 @@ const Navbar = ({ user, role, onSignOut }: { user: FirebaseUser | null, role: Us
 
 const Login = () => {
   const [view, setView] = useState<'login' | 'register'>('login');
+  const [regRole, setRegRole] = useState<'donor' | 'hospital'>('donor');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -309,7 +317,8 @@ const Login = () => {
     phoneNumber: '',
     bloodType: 'O+',
     location: '',
-    locationCoords: null as { latitude: number, longitude: number } | null
+    locationCoords: null as { latitude: number, longitude: number } | null,
+    hospitalAddress: ''
   });
 
   const requestLocation = () => {
@@ -337,6 +346,10 @@ const Login = () => {
   const handleGoogleLogin = async (isRegistration = false, role: UserRole = 'donor') => {
     if (isRegistration) {
       if (role === 'donor' && (!regData.fullName || !regData.phoneNumber)) {
+        setError("Please fill in all required fields.");
+        return;
+      }
+      if (role === 'hospital' && (!regData.fullName || !regData.hospitalAddress)) {
         setError("Please fill in all required fields.");
         return;
       }
@@ -375,6 +388,15 @@ const Login = () => {
             donationCount: 0,
             createdAt: new Date().toISOString()
           });
+        } else if (role === 'hospital') {
+          // Create hospital profile
+          await setDoc(doc(db, 'hospitals', user.uid), {
+            userId: user.uid,
+            name: isRegistration ? regData.fullName : user.displayName,
+            address: isRegistration ? regData.hospitalAddress : '',
+            isApproved: false, // Admin needs to approve
+            createdAt: new Date().toISOString()
+          });
         }
       } else if (isRegistration) {
         setError("An account already exists for this email. Please sign in instead.");
@@ -388,133 +410,234 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 bg-gray-50">
-      <Card className="max-w-md w-full p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center shadow-xl shadow-red-200 mx-auto mb-4">
-            <Droplets className="text-white w-10 h-10" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {view === 'login' ? 'Welcome Back' : view === 'register' ? 'Join as Donor' : 'Register Hospital'}
-          </h1>
-          <p className="text-gray-500 mt-2">
-            {view === 'login' ? 'Smart Blood Bank & Donor Management' : 'Help us save lives in Lesotho'}
-          </p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-white overflow-hidden">
+      {/* Hero Side */}
+      <div className="hidden md:flex md:w-1/2 lg:w-3/5 bg-brand-600 relative overflow-hidden items-center justify-center p-12">
+        <div className="absolute inset-0 opacity-20">
+          <img 
+            src="https://picsum.photos/seed/blood-donation/1920/1080?blur=2" 
+            alt="Hero" 
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
         </div>
-
-        {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            {error}
-          </div>
-        )}
-
-        {view === 'login' ? (
-          <div className="space-y-4">
-            <Button 
-              onClick={() => handleGoogleLogin(false)} 
-              className="w-full py-3 text-lg" 
-              disabled={loading}
-            >
-              <User className="w-5 h-5" />
-              {loading ? 'Signing in...' : 'Sign in with Google'}
-            </Button>
-            <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200"></span></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">New to Blood Suite?</span></div>
+        <div className="relative z-10 max-w-xl text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-[2rem] flex items-center justify-center mb-8 border border-white/20">
+              <Droplets className="text-white w-10 h-10" />
             </div>
-            <div className="grid grid-cols-1 gap-3">
+            <h1 className="text-6xl font-display font-extrabold leading-tight mb-6 tracking-tighter">
+              Save a life <br />
+              <span className="text-brand-200">with every drop.</span>
+            </h1>
+            <p className="text-xl text-brand-50/80 mb-12 leading-relaxed font-medium">
+              Join the most advanced blood donation network in Lesotho. 
+              Real-time tracking, secure messaging, and instant emergency alerts.
+            </p>
+            
+            <div className="grid grid-cols-3 gap-8">
+              <div>
+                <p className="text-3xl font-display font-bold mb-1">5k+</p>
+                <p className="text-sm text-brand-100/60 font-bold uppercase tracking-widest">Donors</p>
+              </div>
+              <div>
+                <p className="text-3xl font-display font-bold mb-1">12+</p>
+                <p className="text-sm text-brand-100/60 font-bold uppercase tracking-widest">Hospitals</p>
+              </div>
+              <div>
+                <p className="text-3xl font-display font-bold mb-1">24/7</p>
+                <p className="text-sm text-brand-100/60 font-bold uppercase tracking-widest">Support</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Decorative elements */}
+        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-brand-500 rounded-full blur-3xl opacity-50 animate-pulse-soft" />
+        <div className="absolute -top-20 -left-20 w-60 h-60 bg-brand-700 rounded-full blur-3xl opacity-50" />
+      </div>
+
+      {/* Form Side */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 bg-[#FAFAFA]">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="max-w-md w-full"
+        >
+          <div className="md:hidden text-center mb-12">
+            <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center shadow-xl shadow-brand-200 mx-auto mb-4">
+              <Droplets className="text-white w-10 h-10" />
+            </div>
+            <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">BloodSuite</h1>
+          </div>
+
+          <div className="mb-10">
+            <h2 className="text-4xl font-display font-extrabold text-slate-900 mb-3 tracking-tight">
+              {view === 'login' ? 'Welcome back' : 'Join the mission'}
+            </h2>
+            <p className="text-slate-500 font-medium">
+              {view === 'login' 
+                ? 'Sign in to manage your donations and messages.' 
+                : 'Create your account and start saving lives today.'}
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-brand-50 text-brand-700 p-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3 border border-brand-100">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {view === 'login' ? (
+            <div className="space-y-6">
+              <Button 
+                onClick={() => handleGoogleLogin(false)} 
+                className="w-full py-4 text-lg" 
+                disabled={loading}
+              >
+                <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </div>
+                {loading ? 'Authenticating...' : 'Continue with Google'}
+              </Button>
+              
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"></span></div>
+                <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em]"><span className="bg-[#FAFAFA] px-4 text-slate-400">New to Blood Suite?</span></div>
+              </div>
+
               <Button 
                 variant="outline" 
                 onClick={() => setView('register')} 
-                className="py-3 text-sm"
+                className="w-full py-4"
                 disabled={loading}
               >
-                Create Donor Account
+                Create Account
               </Button>
             </div>
-          </div>
-        ) : (
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleGoogleLogin(true, 'donor'); }}>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-              <input 
-                type="text" 
-                required
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
-                placeholder="John Doe"
-                value={regData.fullName}
-                onChange={(e) => setRegData({...regData, fullName: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-              <input 
-                type="tel" 
-                required
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all"
-                placeholder="+266 5800 0000"
-                value={regData.phoneNumber}
-                onChange={(e) => setRegData({...regData, phoneNumber: e.target.value})}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Blood Type *</label>
-                <select 
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
-                  value={regData.bloodType}
-                  onChange={(e) => setRegData({...regData, bloodType: e.target.value})}
+          ) : (
+            <div className="space-y-6">
+              {/* Role Switcher */}
+              <div className="flex p-1 bg-slate-100 rounded-2xl">
+                <button 
+                  onClick={() => setRegRole('donor')}
+                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${regRole === 'donor' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}
                 >
-                  {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
+                  Donor
+                </button>
+                <button 
+                  onClick={() => setRegRole('hospital')}
+                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${regRole === 'hospital' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}
+                >
+                  Hospital
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location (Optional)</label>
-                <div className="flex gap-2">
+
+              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleGoogleLogin(true, regRole); }}>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
+                    {regRole === 'donor' ? 'Full Name' : 'Hospital Name'}
+                  </label>
                   <input 
                     type="text" 
-                    className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
-                    placeholder="Maseru"
-                    value={regData.location}
-                    onChange={(e) => setRegData({...regData, location: e.target.value})}
+                    required
+                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                    placeholder={regRole === 'donor' ? 'John Doe' : 'Maseru General Hospital'}
+                    value={regData.fullName}
+                    onChange={(e) => setRegData({...regData, fullName: e.target.value})}
                   />
-                  <button 
-                    type="button"
-                    onClick={requestLocation}
-                    className={`p-2 rounded-lg border transition-all ${regData.locationCoords ? 'bg-green-50 border-green-200 text-green-600' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
-                    title="Use Current Location"
-                  >
-                    <MapPin className="w-5 h-5" />
-                  </button>
                 </div>
-                {regData.locationCoords && <p className="text-[10px] text-green-600 mt-1 font-medium flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Coordinates captured</p>}
-              </div>
+
+                {regRole === 'donor' ? (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        required
+                        className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                        placeholder="+266 5800 0000"
+                        value={regData.phoneNumber}
+                        onChange={(e) => setRegData({...regData, phoneNumber: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Blood Type</label>
+                        <select 
+                          className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium appearance-none"
+                          value={regData.bloodType}
+                          onChange={(e) => setRegData({...regData, bloodType: e.target.value})}
+                        >
+                          {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            className="flex-1 px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                            placeholder="Maseru"
+                            value={regData.location}
+                            onChange={(e) => setRegData({...regData, location: e.target.value})}
+                          />
+                          <button 
+                            type="button"
+                            onClick={requestLocation}
+                            className={`w-14 rounded-2xl border transition-all flex items-center justify-center ${regData.locationCoords ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'}`}
+                          >
+                            <MapPin className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Hospital Address</label>
+                    <textarea 
+                      required
+                      rows={3}
+                      className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium resize-none"
+                      placeholder="123 Kingsway Road, Maseru"
+                      value={regData.hospitalAddress}
+                      onChange={(e) => setRegData({...regData, hospitalAddress: e.target.value})}
+                    />
+                  </div>
+                )}
+
+                <Button 
+                  type="submit"
+                  className="w-full py-4 text-lg mt-4" 
+                  disabled={loading}
+                >
+                  {loading ? 'Creating Account...' : `Register as ${regRole === 'donor' ? 'Donor' : 'Hospital'}`}
+                </Button>
+                <button 
+                  type="button"
+                  onClick={() => setView('login')} 
+                  className="w-full py-2 text-sm font-bold text-slate-400 hover:text-brand-600 transition-colors"
+                  disabled={loading}
+                >
+                  Already have an account? Sign In
+                </button>
+              </form>
             </div>
-            <Button 
-              type="submit"
-              className="w-full py-3 text-lg mt-4" 
-              disabled={loading}
-            >
-              {loading ? 'Creating Account...' : 'Register as Donor'}
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => setView('login')} 
-              className="w-full"
-              disabled={loading}
-            >
-              Already have an account? Sign In
-            </Button>
-          </form>
-        )}
-        
-        <p className="text-xs text-center text-gray-400 mt-8">
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-        </p>
-      </Card>
+          )}
+          
+          <p className="text-[10px] font-bold text-center text-slate-400 uppercase tracking-[0.2em] mt-12">
+            Secure • Encrypted • Life-Saving
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 };
@@ -526,6 +649,7 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string, isVisible: boolean }>({ message: '', isVisible: false });
+  const [showMobileInfo, setShowMobileInfo] = useState(false);
 
   const showToast = (message: string) => {
     setToast({ message, isVisible: true });
@@ -610,7 +734,7 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-24 md:pb-0">
       {/* Toast Notification */}
       <Toast 
         message={toast.message} 
@@ -627,154 +751,269 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
         onSuccess={showToast}
       />
 
+      {/* Mobile Info Modal */}
+      <AnimatePresence>
+        {showMobileInfo && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileInfo(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white rounded-[2.5rem] p-8 max-w-lg w-full premium-shadow"
+            >
+              <button 
+                onClick={() => setShowMobileInfo(false)}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-brand-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              
+              <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-200">
+                <Droplets className="text-white w-8 h-8" />
+              </div>
+              
+              <h2 className="text-3xl font-display font-extrabold text-slate-900 mb-4 tracking-tight">Run on your phone</h2>
+              <p className="text-slate-500 mb-8 leading-relaxed">
+                BloodSuite is a Progressive Web App (PWA) designed to work perfectly on mobile devices.
+              </p>
+              
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600">1</div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Open on mobile</h4>
+                    <p className="text-sm text-slate-500">Scan the QR code or open the shared URL in Safari (iOS) or Chrome (Android).</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600">2</div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Add to Home Screen</h4>
+                    <p className="text-sm text-slate-500">Tap the "Share" icon (iOS) or "Menu" (Android) and select <strong>"Add to Home Screen"</strong>.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600">3</div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Launch App</h4>
+                    <p className="text-sm text-slate-500">The app will now appear on your home screen and run in full-screen mode like a native app.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <Button onClick={() => setShowMobileInfo(false)} className="w-full mt-10 py-4">
+                Got it!
+              </Button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Urgent Notifications Banner */}
       {notifications.filter(n => !n.isRead && (n.priority === 'critical' || n.priority === 'high')).map(n => (
         <motion.div 
           key={n.id}
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
-          className={`p-4 rounded-xl shadow-lg flex items-center justify-between gap-4 ${
-            n.priority === 'critical' ? 'bg-red-600' : 'bg-orange-500'
-          } text-white`}
+          className={`p-5 rounded-[2rem] shadow-xl flex items-center justify-between gap-4 ${
+            n.priority === 'critical' ? 'bg-brand-600' : 'bg-orange-500'
+          } text-white premium-shadow`}
         >
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-2xl animate-pulse">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold">{n.title}</h3>
-              <p className="text-sm text-red-100">{n.message}</p>
+              <h3 className="font-display font-bold text-lg">{n.title}</h3>
+              <p className="text-sm text-white/80 font-medium">{n.message}</p>
             </div>
           </div>
           <div className="flex gap-2">
             <Link to="/schedule">
-              <Button variant="secondary" className="bg-white text-red-600 hover:bg-red-50 text-sm py-1 px-3">
+              <Button variant="secondary" className="bg-white text-brand-600 hover:bg-brand-50 text-sm py-2 px-4">
                 Help Now
               </Button>
             </Link>
-            <button onClick={() => markAsRead(n.id!)} className="p-1 hover:bg-white/10 rounded">
+            <button onClick={() => markAsRead(n.id!)} className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
         </motion.div>
       ))}
 
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hello, {user.displayName}!</h1>
-          <p className="text-gray-500">Your blood type: <span className="font-bold text-red-600">{donorProfile?.bloodType || 'Not set'}</span></p>
+          <h1 className="text-4xl font-display font-extrabold text-slate-900 tracking-tight">Hello, {user.displayName?.split(' ')[0]}!</h1>
+          <p className="text-slate-500 font-medium mt-1">
+            Your blood type: <span className="font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-lg">{donorProfile?.bloodType || 'Not set'}</span>
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={() => window.location.reload()} 
-            className="p-2 text-gray-400 hover:text-red-600 transition-all md:hidden"
+            className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all md:hidden"
           >
             <RefreshCw className="w-5 h-5" />
           </button>
           {isEligible ? (
-            <Badge variant="success">Eligible to Donate</Badge>
+            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-100 font-bold text-sm">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              Eligible to Donate
+            </div>
           ) : (
-            <Badge variant="warning">Next donation: {format(nextEligibleDate, 'MMM dd, yyyy')}</Badge>
+            <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-2xl border border-amber-100 font-bold text-sm">
+              <Clock className="w-4 h-4" />
+              Next: {format(nextEligibleDate, 'MMM dd')}
+            </div>
           )}
         </div>
       </header>
 
-      {/* Quick Actions - Mobile Optimized */}
-      <div className="grid grid-cols-2 gap-4 md:hidden">
-        <Link to="/schedule" className="bg-red-600 p-4 rounded-2xl text-white shadow-lg shadow-red-200 flex flex-col items-center gap-2">
-          <Calendar className="w-6 h-6" />
-          <span className="text-sm font-bold">Schedule</span>
+      {/* Quick Actions - Bento Style */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Link to="/schedule" className="bg-brand-600 p-6 rounded-[2rem] text-white shadow-xl shadow-brand-200 flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group">
+          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+            <Calendar className="w-6 h-6" />
+          </div>
+          <span className="text-lg font-display font-bold">Schedule <br />Donation</span>
         </Link>
-        <Link to="/profile" className="bg-white p-4 rounded-2xl text-gray-900 border border-gray-100 shadow-sm flex flex-col items-center gap-2">
-          <User className="w-6 h-6 text-red-600" />
-          <span className="text-sm font-bold">My Profile</span>
+        <Link to="/messages" className="bg-white p-6 rounded-[2rem] text-slate-900 border border-slate-100 premium-shadow flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group">
+          <div className="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 group-hover:-rotate-12 transition-transform">
+            <MessageSquare className="w-6 h-6" />
+          </div>
+          <span className="text-lg font-display font-bold">Messages <br />System</span>
+        </Link>
+        <button 
+          onClick={() => setShowMobileInfo(true)}
+          className="bg-slate-900 p-6 rounded-[2rem] text-white flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group"
+        >
+          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Droplets className="w-6 h-6 text-brand-400" />
+          </div>
+          <span className="text-lg font-display font-bold text-left">Run on <br />Phone</span>
+        </button>
+        <Link to="/profile" className="bg-white p-6 rounded-[2rem] text-slate-900 border border-slate-100 premium-shadow flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group">
+          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+            <User className="w-6 h-6" />
+          </div>
+          <span className="text-lg font-display font-bold">My <br />Profile</span>
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <Card className="md:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <History className="w-5 h-5 text-red-600" />
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-display font-extrabold flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                <History className="w-5 h-5 text-brand-600" />
+              </div>
               Recent Donations
             </h2>
-            <Button variant="ghost" className="text-sm">View All</Button>
+            <Button variant="ghost" className="text-sm font-bold">View All</Button>
           </div>
-          <div className="space-y-4">
-            {history.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
-                        <Droplets className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{item.hospitalName}</p>
-                        <p className="text-xs text-gray-500">{format(new Date(item.scheduledAt), 'MMMM dd, yyyy')}</p>
-                      </div>
+          
+          {history.length > 0 ? (
+            <div className="space-y-4">
+              {history.map((item, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex items-center justify-between p-5 rounded-3xl border border-slate-50 hover:bg-slate-50/50 hover:border-slate-100 transition-all group"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Droplets className="w-7 h-7 text-brand-600" />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant={item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'danger' : 'info'}>
-                        {item.status}
-                      </Badge>
-                      {item.status === 'completed' && (
-                        <Button 
-                          variant="ghost" 
-                          className="text-xs text-red-600 hover:text-red-700"
-                          onClick={() => openFeedback(item)}
-                        >
-                          Give Feedback
-                        </Button>
-                      )}
+                    <div>
+                      <p className="font-bold text-slate-900 text-lg leading-tight mb-1">{item.hospitalName}</p>
+                      <p className="text-sm text-slate-400 font-medium">{format(new Date(item.scheduledAt), 'MMMM dd, yyyy')}</p>
                     </div>
                   </div>
-            ))}
-          </div>
+                  <div className="flex items-center gap-4">
+                    <Badge variant={item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'danger' : 'info'}>
+                      {item.status}
+                    </Badge>
+                    {item.status === 'completed' && (
+                      <button 
+                        className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all"
+                        onClick={() => openFeedback(item)}
+                        title="Give Feedback"
+                      >
+                        <Star className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-20 text-center">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Droplets className="w-10 h-10 text-slate-200" />
+              </div>
+              <p className="text-slate-400 font-medium">No donation history yet.</p>
+              <Link to="/schedule">
+                <Button variant="ghost" className="mt-2 text-brand-600 font-bold">Schedule your first donation</Button>
+              </Link>
+            </div>
+          )}
         </Card>
 
-        <div className="space-y-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
-              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-              Donor Achievements
+        <div className="space-y-8">
+          <Card className="p-8">
+            <h3 className="text-xl font-display font-extrabold flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+              </div>
+              Achievements
             </h3>
-            <div className="space-y-6">
-              <div className="flex flex-wrap gap-3">
+            <div className="space-y-8">
+              <div className="flex flex-wrap gap-4">
                 {donorProfile?.donationCount && donorProfile.donationCount >= 1 && (
-                  <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-600 border border-red-100 shadow-sm" title="First Drop">
-                    <Droplets className="w-6 h-6" />
-                  </div>
+                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 border border-brand-100 shadow-sm" title="First Drop">
+                    <Droplets className="w-7 h-7" />
+                  </motion.div>
                 )}
                 {donorProfile?.donationCount && donorProfile.donationCount >= 5 && (
-                  <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm" title="Life Saver">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
+                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm" title="Life Saver">
+                    <ShieldCheck className="w-7 h-7" />
+                  </motion.div>
                 )}
                 {donorProfile?.donationCount && donorProfile.donationCount >= 10 && (
-                  <div className="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center text-yellow-600 border border-yellow-100 shadow-sm" title="Hero">
-                    <Star className="w-6 h-6" />
-                  </div>
+                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 border border-amber-100 shadow-sm" title="Hero">
+                    <Star className="w-7 h-7" />
+                  </motion.div>
                 )}
                 {donorProfile?.donationCount && donorProfile.donationCount >= 25 && (
-                  <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 border border-purple-100 shadow-sm" title="Legend">
-                    <Activity className="w-6 h-6" />
-                  </div>
+                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 border border-purple-100 shadow-sm" title="Legend">
+                    <Activity className="w-7 h-7" />
+                  </motion.div>
                 )}
                 {(!donorProfile?.donationCount || donorProfile.donationCount === 0) && (
-                  <p className="text-sm text-gray-400 italic">Complete your first donation to earn badges!</p>
+                  <p className="text-sm text-slate-400 italic leading-relaxed">Complete your first donation to earn exclusive badges!</p>
                 )}
               </div>
 
               {donorProfile?.donationCount !== undefined && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
                     <span>Next Milestone</span>
                     <span>{donorProfile.donationCount} / {donorProfile.donationCount < 1 ? 1 : donorProfile.donationCount < 5 ? 5 : donorProfile.donationCount < 10 ? 10 : 25}</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${(donorProfile.donationCount / (donorProfile.donationCount < 1 ? 1 : donorProfile.donationCount < 5 ? 5 : donorProfile.donationCount < 10 ? 10 : 25)) * 100}%` }}
-                      className="h-full bg-red-600 rounded-full"
+                      className="h-full bg-brand-600 rounded-full shadow-lg shadow-brand-200"
                     />
                   </div>
                 </div>
@@ -782,46 +1021,44 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
             </div>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Bell className="w-5 h-5 text-red-600" />
-                Notifications
+          <Card className="p-8 bg-slate-900 text-white border-none">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-display font-extrabold flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-brand-400" />
+                </div>
+                Alerts
               </h3>
-              <button className="text-xs text-gray-400 hover:text-red-600">View All</button>
+              <Link to="/notifications" className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors uppercase tracking-widest">View All</Link>
             </div>
-            <div className="space-y-3">
-              {notifications.length > 0 ? notifications.map(n => (
-                <div key={n.id} className={`p-3 rounded-lg border-l-4 transition-all ${n.isRead ? 'bg-gray-50 border-gray-200' : 'bg-white border-red-500 shadow-sm'}`}>
-                  <div className="flex justify-between items-start mb-1">
-                    <p className={`text-sm font-bold ${n.isRead ? 'text-gray-600' : 'text-gray-900'}`}>{n.title}</p>
-                    {!n.isRead && <button onClick={() => markAsRead(n.id!)} className="text-[10px] text-red-600 font-bold hover:underline">Mark read</button>}
-                  </div>
-                  <p className="text-xs text-gray-500 leading-relaxed">{n.message}</p>
-                  <p className="text-[10px] text-gray-400 mt-2">{format(new Date(n.createdAt), 'MMM dd, HH:mm')}</p>
+            <div className="space-y-4">
+              {notifications.length > 0 ? notifications.map((n, i) => (
+                <div key={n.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+                  <p className="text-sm font-bold mb-1 line-clamp-1">{n.title}</p>
+                  <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">{n.message}</p>
                 </div>
               )) : (
-                <p className="text-sm text-gray-400 text-center py-8">No new alerts</p>
+                <p className="text-sm text-white/40 italic">No new notifications.</p>
               )}
             </div>
           </Card>
         </div>
       </div>
 
-      <Card className="bg-gradient-to-br from-red-600 to-red-700 text-white border-none">
+      <Card className="bg-gradient-to-br from-brand-600 to-brand-700 text-white border-none p-8 mt-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold">Ready to save a life?</h2>
+            <h2 className="text-2xl font-display font-extrabold">Ready to save a life?</h2>
             {isEligible ? (
-              <p className="text-red-100">There is currently a high demand for {donorProfile?.bloodType} blood in Maseru.</p>
+              <p className="text-brand-100 font-medium">There is currently a high demand for {donorProfile?.bloodType} blood in Maseru.</p>
             ) : (
-              <p className="text-red-100">You will be eligible to donate again on {format(nextEligibleDate, 'MMMM dd, yyyy')}.</p>
+              <p className="text-brand-100 font-medium">You will be eligible to donate again on {format(nextEligibleDate, 'MMMM dd, yyyy')}.</p>
             )}
           </div>
           <Link to={isEligible ? "/schedule" : "#"}>
             <Button 
               variant="secondary" 
-              className={`bg-white text-red-600 hover:bg-red-50 px-8 py-3 text-lg ${!isEligible ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`bg-white text-brand-600 hover:bg-brand-50 px-8 py-4 text-lg font-bold ${!isEligible ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!isEligible}
             >
               Schedule Donation
@@ -1497,6 +1734,7 @@ const DonorDirectory = () => {
 
 const AdminDashboard = () => {
   const [feedbacks, setFeedbacks] = useState<DonationFeedback[]>([]);
+  const [pendingHospitals, setPendingHospitals] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalDonors: 0,
     totalDonations: 0,
@@ -1514,6 +1752,10 @@ const AdminDashboard = () => {
       }
     });
 
+    const unsubHospitals = onSnapshot(query(collection(db, 'hospitals'), where('isApproved', '==', false)), (snapshot) => {
+      setPendingHospitals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     // Fetch other stats
     const fetchStats = async () => {
       const donors = await getDocs(collection(db, 'donors'));
@@ -1527,94 +1769,145 @@ const AdminDashboard = () => {
     };
     fetchStats();
 
-    return () => { unsubFeedbacks(); };
+    return () => { unsubFeedbacks(); unsubHospitals(); };
   }, []);
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900">System Administration</h1>
-        <p className="text-gray-500">Overview of Blood Suite operations and donor feedback</p>
+    <div className="space-y-10 pb-24 md:pb-0">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-display font-extrabold text-slate-900 tracking-tight">System Administration</h1>
+          <p className="text-slate-500 font-medium mt-1">Overview of Blood Suite operations and donor feedback</p>
+        </div>
+        <div className="flex gap-4">
+          <Link to="/donors">
+            <Button variant="outline">Manage Donors</Button>
+          </Link>
+          <Link to="/hospitals">
+            <Button variant="outline">Manage Hospitals</Button>
+          </Link>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        <Card className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 text-center md:text-left">
-            <div className="bg-red-50 p-2 md:p-3 rounded-xl text-red-600">
-              <User className="w-5 h-5 md:w-6 md:h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-8 hover:scale-[1.02] transition-transform group">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 group-hover:rotate-12 transition-transform">
+              <User className="w-8 h-8" />
             </div>
             <div>
-              <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider font-bold">Donors</p>
-              <p className="text-xl md:text-2xl font-bold">{stats.totalDonors}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Total Donors</p>
+              <p className="text-4xl font-display font-extrabold text-slate-900">{stats.totalDonors}</p>
             </div>
           </div>
         </Card>
-        <Card className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 text-center md:text-left">
-            <div className="bg-green-50 p-2 md:p-3 rounded-xl text-green-600">
-              <Droplets className="w-5 h-5 md:w-6 md:h-6" />
+        <Card className="p-8 hover:scale-[1.02] transition-transform group">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:-rotate-12 transition-transform">
+              <Droplets className="w-8 h-8" />
             </div>
             <div>
-              <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider font-bold">Donations</p>
-              <p className="text-xl md:text-2xl font-bold">{stats.totalDonations}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Donations</p>
+              <p className="text-4xl font-display font-extrabold text-slate-900">{stats.totalDonations}</p>
             </div>
           </div>
         </Card>
-        <Card className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 text-center md:text-left">
-            <div className="bg-yellow-50 p-2 md:p-3 rounded-xl text-yellow-600">
-              <Star className="w-5 h-5 md:w-6 md:h-6" />
+        <Card className="p-8 hover:scale-[1.02] transition-transform group">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+              <Star className="w-8 h-8 fill-amber-500" />
             </div>
             <div>
-              <p className="text-[10px] md:text-sm text-gray-500 uppercase tracking-wider font-bold">Rating</p>
-              <p className="text-xl md:text-2xl font-bold">{stats.avgRating.toFixed(1)}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Avg Rating</p>
+              <p className="text-4xl font-display font-extrabold text-slate-900">{stats.avgRating.toFixed(1)}</p>
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
-        {/* Recent Donor Feedback */}
-        <Card className="p-0 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="text-lg font-bold">Recent Donor Feedback</h2>
-          </div>
-          <div className="p-6 space-y-6 max-h-[400px] overflow-y-auto">
-            {feedbacks.length > 0 ? feedbacks.map((f) => (
-            <div key={f.id} className="p-4 rounded-xl border border-gray-100 hover:border-red-100 transition-all">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500">
-                    {f.donorName[0]}
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Pending Hospital Approvals */}
+        {pendingHospitals.length > 0 && (
+          <Card className="p-0 overflow-hidden border-none premium-shadow">
+            <div className="p-8 border-b border-slate-100 bg-amber-50/50 flex items-center justify-between">
+              <h2 className="text-2xl font-display font-extrabold text-slate-900">Pending Approvals</h2>
+              <Badge variant="warning">{pendingHospitals.length} Pending</Badge>
+            </div>
+            <div className="p-8 space-y-4">
+              {pendingHospitals.map(hospital => (
+                <div key={hospital.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-50 bg-white">
                   <div>
-                    <p className="font-bold text-gray-900">{f.donorName}</p>
-                    <p className="text-xs text-gray-500">at {f.hospitalName}</p>
+                    <p className="font-bold text-slate-900">{hospital.name}</p>
+                    <p className="text-xs text-slate-500">{hospital.address}</p>
+                  </div>
+                  <Link to="/hospitals">
+                    <Button size="sm">Review</Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Recent Donor Feedback */}
+        <Card className={`p-0 overflow-hidden border-none premium-shadow ${pendingHospitals.length === 0 ? 'lg:col-span-2' : ''}`}>
+          <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <h2 className="text-2xl font-display font-extrabold text-slate-900">Recent Donor Feedback</h2>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+              <MessageSquare className="w-4 h-4 text-brand-600" />
+              <span className="text-sm font-bold text-slate-600">{feedbacks.length} Responses</span>
+            </div>
+          </div>
+          <div className="p-8 space-y-6 max-h-[600px] overflow-y-auto custom-scrollbar">
+            {feedbacks.length > 0 ? feedbacks.map((f, i) => (
+              <motion.div 
+                key={f.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="p-6 rounded-[2rem] border border-slate-50 hover:bg-slate-50/50 hover:border-slate-100 transition-all group"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center font-display font-bold text-slate-500 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                      {f.donorName[0]}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900 text-lg leading-tight">{f.donorName}</p>
+                      <p className="text-sm text-slate-400 font-medium">at {f.hospitalName}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} className={`w-3.5 h-3.5 ${f.rating >= s ? 'text-amber-500 fill-current' : 'text-amber-200'}`} />
+                    ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map(s => (
-                    <Star key={s} className={`w-4 h-4 ${f.rating >= s ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} />
-                  ))}
+                <div className="relative">
+                  <span className="absolute -left-2 -top-2 text-4xl text-slate-100 font-serif">"</span>
+                  <p className="text-slate-600 text-lg italic leading-relaxed pl-4 relative z-10">{f.comment}</p>
                 </div>
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{format(new Date(f.createdAt), 'MMM dd, yyyy • HH:mm')}</p>
+                  <button className="text-xs font-bold text-brand-600 hover:underline">Reply</button>
+                </div>
+              </motion.div>
+            )) : (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-10 h-10 text-slate-200" />
+                </div>
+                <p className="text-slate-400 font-medium">No feedback received yet.</p>
               </div>
-              <p className="text-gray-600 text-sm italic">"{f.comment}"</p>
-              <p className="text-[10px] text-gray-400 mt-3">{format(new Date(f.createdAt), 'MMM dd, yyyy • HH:mm')}</p>
-            </div>
-          )) : (
-            <div className="text-center py-12 text-gray-400">
-              <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>No feedback received yet.</p>
-            </div>
-          )}
-        </div>
-      </Card>
-    </div>
+            )}
+          </div>
+        </Card>
+      </div>
 
-    <div className="md:hidden pt-4">
+      <div className="md:hidden pt-8">
         <Button 
-          variant="danger" 
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-red-100"
+          variant="outline" 
+          className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 border-slate-200 text-slate-600"
           onClick={() => auth.signOut()}
         >
           <LogOut className="w-5 h-5" />
@@ -1626,11 +1919,12 @@ const AdminDashboard = () => {
 };
 
 const MessagesPage = ({ user }: { user: FirebaseUser }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pgStatus, setPgStatus] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkPg = async () => {
@@ -1650,19 +1944,24 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
     checkPg();
   }, [user.uid]);
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
     setSending(true);
     try {
-      // For demo purposes, sending to a fixed "system" recipient if no one else
       const msg = await api.sendMessage({
         senderId: user.uid,
         recipientId: 'system',
         content: newMessage
       });
-      setMessages([msg, ...messages]);
+      setMessages(prev => [msg, ...prev]);
       setNewMessage('');
     } catch (err) {
       console.error("Failed to send message", err);
@@ -1671,21 +1970,26 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><RefreshCw className="w-8 h-8 text-red-600 animate-spin" /></div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20 space-y-4">
+      <div className="w-12 h-12 border-4 border-brand-100 border-t-brand-600 rounded-full animate-spin" />
+      <p className="text-slate-400 font-medium">Loading conversation...</p>
+    </div>
+  );
 
   if (pgStatus !== 'connected') {
     return (
-      <div className="max-w-md mx-auto py-12 text-center">
-        <Card>
-          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <DatabaseIcon className="w-8 h-8 text-amber-600" />
+      <div className="max-w-xl mx-auto py-12">
+        <Card className="p-12 text-center">
+          <div className="w-20 h-20 bg-amber-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-amber-100">
+            <DatabaseIcon className="w-10 h-10 text-amber-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Main System Offline</h2>
-          <p className="text-gray-600 mb-6">
-            The messaging system requires a PostgreSQL connection which is currently unavailable. 
-            Please ensure your DATABASE_URL is correctly configured in the environment secrets.
+          <h2 className="text-3xl font-display font-extrabold text-slate-900 mb-4 tracking-tight">Messaging Offline</h2>
+          <p className="text-slate-500 mb-8 leading-relaxed font-medium">
+            The secure messaging system requires a PostgreSQL connection which is currently unavailable in this preview. 
+            In a production environment, this connects to the main Lesotho Blood Bank system.
           </p>
-          <div className="p-3 bg-gray-50 rounded-lg text-xs font-mono text-gray-500 break-all">
+          <div className="p-4 bg-slate-50 rounded-2xl text-xs font-mono text-slate-400 break-all border border-slate-100">
             Status: {pgStatus}
           </div>
         </Card>
@@ -1694,45 +1998,428 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-        <p className="text-gray-500">Secure communication via the main system (PostgreSQL)</p>
+    <div className="max-w-4xl mx-auto h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)] flex flex-col pb-24 md:pb-0">
+      <header className="mb-8 shrink-0">
+        <h1 className="text-4xl font-display font-extrabold text-slate-900 tracking-tight">Messages</h1>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Secure connection active</p>
+        </div>
       </header>
 
-      <Card className="p-0 flex flex-col h-[600px]">
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.length > 0 ? messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.sender_id === user.uid ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-4 rounded-2xl ${msg.sender_id === user.uid ? 'bg-red-600 text-white rounded-tr-none' : 'bg-gray-100 text-gray-900 rounded-tl-none'}`}>
-                <p className="text-sm">{msg.content}</p>
-                <p className={`text-[10px] mt-1 ${msg.sender_id === user.uid ? 'text-red-100' : 'text-gray-400'}`}>
-                  {format(new Date(msg.created_at), 'HH:mm')}
-                </p>
+      <Card className="flex-1 flex flex-col overflow-hidden p-0 border-none premium-shadow">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4 shrink-0">
+          <div className="w-12 h-12 bg-brand-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-100">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900">Support & Coordination</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Official Channel</p>
+          </div>
+        </div>
+
+        <div 
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-slate-50/30 flex flex-col-reverse"
+        >
+          {messages.length > 0 ? (
+            messages.map((msg, i) => {
+              const isMe = msg.sender_id === user.uid;
+              return (
+                <motion.div 
+                  key={msg.id || i}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[85%] md:max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1.5`}>
+                    <div className={`px-6 py-4 rounded-[2rem] text-sm font-medium leading-relaxed shadow-sm ${
+                      isMe 
+                        ? 'bg-brand-600 text-white rounded-tr-none' 
+                        : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
+                    }`}>
+                      {msg.content}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">
+                      {isMe ? 'You' : 'System'} • {format(new Date(msg.created_at), 'HH:mm')}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center px-12 py-20">
+              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-8">
+                <MessageSquare className="w-12 h-12 text-slate-300" />
               </div>
-            </div>
-          )) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
-              <MessageSquare className="w-12 h-12 mb-2 opacity-20" />
-              <p>No messages yet. Start a conversation!</p>
+              <h4 className="text-2xl font-display font-bold text-slate-900 mb-3">No messages yet</h4>
+              <p className="text-slate-400 leading-relaxed font-medium">
+                Start a conversation with our coordination team. We're here to help with your donation journey.
+              </p>
             </div>
           )}
         </div>
-        <div className="p-4 border-t border-gray-100">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
+
+        <div className="p-6 bg-white border-t border-slate-100 shrink-0">
+          <form onSubmit={handleSendMessage} className="flex gap-4">
             <input 
-              type="text" 
-              className="flex-1 px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none"
-              placeholder="Type a message..."
+              type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+              disabled={sending}
             />
-            <Button type="submit" disabled={sending || !newMessage.trim()}>
-              <Send className="w-5 h-5" />
+            <Button 
+              type="submit" 
+              className="px-8"
+              disabled={sending || !newMessage.trim()}
+            >
+              {sending ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </Button>
           </form>
         </div>
       </Card>
+    </div>
+  );
+};
+
+const HospitalDashboard = ({ user }: { user: FirebaseUser }) => {
+  const [requests, setRequests] = useState<BloodRequest[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [hospitalInfo, setHospitalInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+
+  useEffect(() => {
+    const fetchHospital = async () => {
+      const docRef = doc(db, 'hospitals', user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) setHospitalInfo(docSnap.data());
+    };
+
+    const unsubRequests = onSnapshot(query(collection(db, 'blood_requests'), where('hospitalName', '==', hospitalInfo?.name || ''), orderBy('createdAt', 'desc')), (snapshot) => {
+      setRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BloodRequest)));
+    });
+
+    const unsubAppointments = onSnapshot(query(collection(db, 'appointments'), where('hospitalId', '==', user.uid), orderBy('scheduledAt', 'asc')), (snapshot) => {
+      setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    fetchHospital().then(() => setLoading(false));
+    return () => { unsubRequests(); unsubAppointments(); };
+  }, [user.uid, hospitalInfo?.name]);
+
+  if (loading) return <div className="flex justify-center py-20"><RefreshCw className="w-8 h-8 text-brand-600 animate-spin" /></div>;
+
+  if (hospitalInfo && !hospitalInfo.isApproved) {
+    return (
+      <div className="max-w-xl mx-auto py-20">
+        <Card className="text-center p-12">
+          <div className="w-20 h-20 bg-amber-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-amber-100">
+            <Clock className="w-10 h-10 text-amber-600" />
+          </div>
+          <h2 className="text-3xl font-display font-extrabold text-slate-900 mb-4">Pending Approval</h2>
+          <p className="text-slate-500 font-medium leading-relaxed">
+            Your hospital account is currently being reviewed by the Lesotho Blood Bank administrators. 
+            You will receive a notification once your account is approved.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-10 pb-24 md:pb-0">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-display font-extrabold text-slate-900 tracking-tight">{hospitalInfo?.name}</h1>
+          <p className="text-slate-500 font-medium mt-1">Hospital Management Portal</p>
+        </div>
+        <Button onClick={() => setShowRequestModal(true)} className="md:w-auto w-full">
+          <Plus className="w-5 h-5" />
+          New Blood Request
+        </Button>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="p-0 overflow-hidden border-none premium-shadow">
+            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <h2 className="text-2xl font-display font-extrabold text-slate-900">Active Requests</h2>
+              <Badge variant="info">{requests.length} Active</Badge>
+            </div>
+            <div className="p-8 space-y-4">
+              {requests.length > 0 ? requests.map((req, i) => (
+                <motion.div 
+                  key={req.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex items-center justify-between p-6 rounded-[2rem] border border-slate-50 hover:bg-slate-50/50 transition-all"
+                >
+                  <div className="flex items-center gap-6">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl ${
+                      req.urgency === 'emergency' ? 'bg-brand-50 text-brand-600' : 'bg-blue-50 text-blue-600'
+                    }`}>
+                      {req.bloodType}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900 text-lg">{req.quantity_ml}ml Requested</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant={req.urgency === 'emergency' ? 'danger' : req.urgency === 'urgent' ? 'warning' : 'info'}>
+                          {req.urgency}
+                        </Badge>
+                        <span className="text-xs text-slate-400 font-medium">• {format(new Date(req.createdAt), 'MMM dd, HH:mm')}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant={req.status === 'pending' ? 'warning' : 'success'}>{req.status}</Badge>
+                </motion.div>
+              )) : (
+                <div className="text-center py-20 text-slate-400">
+                  <Droplets className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium">No active blood requests.</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-8">
+          <Card className="p-8">
+            <h3 className="text-xl font-display font-extrabold text-slate-900 mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600">
+                <Calendar className="w-5 h-5" />
+              </div>
+              Today's Appointments
+            </h3>
+            <div className="space-y-4">
+              {appointments.filter(a => format(new Date(a.scheduledAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).length > 0 ? (
+                appointments.filter(a => format(new Date(a.scheduledAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).map((app, i) => (
+                  <div key={app.id} className="p-4 rounded-2xl border border-slate-50 bg-slate-50/30">
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="font-bold text-slate-900">{format(new Date(app.scheduledAt), 'HH:mm')}</p>
+                      <Badge variant="info">Scheduled</Badge>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium">Donor ID: {app.donorId.substring(0, 8)}...</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-400 italic">No appointments for today.</p>
+              )}
+            </div>
+          </Card>
+
+          <Card className="p-8 bg-slate-900 text-white border-none">
+            <h3 className="text-xl font-display font-extrabold mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-brand-400">
+                <Activity className="w-5 h-5" />
+              </div>
+              Inventory Status
+            </h3>
+            <div className="space-y-4">
+              {['A+', 'B+', 'O+', 'AB+'].map(type => (
+                <div key={type} className="flex items-center justify-between">
+                  <span className="font-bold text-slate-400">{type}</span>
+                  <div className="flex-1 mx-4 h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-brand-500 rounded-full" style={{ width: `${Math.random() * 100}%` }} />
+                  </div>
+                  <span className="text-xs font-bold">Optimal</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Request Modal Placeholder */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowRequestModal(false)} />
+          <Card className="relative w-full max-w-lg p-8">
+            <h2 className="text-2xl font-display font-extrabold text-slate-900 mb-6">New Blood Request</h2>
+            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setShowRequestModal(false); }}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Blood Type</label>
+                  <select className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-brand-500">
+                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Quantity (ml)</label>
+                  <input type="number" defaultValue="450" className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-brand-500" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Urgency</label>
+                <select className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-brand-500">
+                  <option value="routine">Routine</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="emergency">Emergency</option>
+                </select>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <Button variant="secondary" className="flex-1" onClick={() => setShowRequestModal(false)}>Cancel</Button>
+                <Button type="submit" className="flex-1">Submit Request</Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const HospitalProfilePage = ({ user, hospitalProfile }: { user: FirebaseUser, hospitalProfile: any | null }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: hospitalProfile?.name || '',
+    address: hospitalProfile?.address || ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await updateDoc(doc(db, 'hospitals', user.uid), formData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Update failed", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Hospital Profile</h1>
+        <Button 
+          variant={isEditing ? 'ghost' : 'outline'} 
+          onClick={() => setIsEditing(!isEditing)}
+        >
+          {isEditing ? 'Cancel' : 'Edit Profile'}
+        </Button>
+      </header>
+
+      <Card className="overflow-hidden">
+        <div className="bg-brand-600 h-24 -mx-6 -mt-6 mb-12 relative">
+          <div className="absolute -bottom-10 left-6">
+            <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center border-4 border-white">
+              {user.photoURL ? (
+                <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full rounded-xl object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <HospitalIcon className="w-10 h-10 text-gray-300" />
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{hospitalProfile?.name || user.displayName}</h2>
+            <p className="text-gray-500">{user.email}</p>
+          </div>
+
+          <div className="p-4 bg-gray-50 rounded-xl">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Status</p>
+            <Badge variant={hospitalProfile?.isApproved ? 'success' : 'warning'}>
+              {hospitalProfile?.isApproved ? 'Verified Hospital' : 'Pending Approval'}
+            </Badge>
+          </div>
+
+          {isEditing ? (
+            <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-gray-100">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Hospital Name</label>
+                <input 
+                  type="text" 
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-500 outline-none"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Address</label>
+                <textarea 
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-500 outline-none"
+                  value={formData.address}
+                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-4 pt-4 border-t border-gray-100">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Address</p>
+                  <p className="text-gray-900">{hospitalProfile?.address || 'Not set'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const HospitalDirectory = () => {
+  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'hospitals'), (snapshot) => {
+      setHospitals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    await updateDoc(doc(db, 'hospitals', id), { isApproved: true });
+  };
+
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-bold text-gray-900">Hospital Directory</h1>
+        <p className="text-gray-500">Manage and approve hospital partners</p>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {hospitals.map(hospital => (
+          <div key={hospital.id}>
+            <Card className="p-6 h-full">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600">
+                  <HospitalIcon className="w-6 h-6" />
+                </div>
+                <Badge variant={hospital.isApproved ? 'success' : 'warning'}>
+                  {hospital.isApproved ? 'Approved' : 'Pending'}
+                </Badge>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">{hospital.name}</h3>
+              <p className="text-sm text-slate-500 mb-4 flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" />
+                {hospital.address}
+              </p>
+              {!hospital.isApproved && (
+                <Button onClick={() => handleApprove(hospital.id)} className="w-full">
+                  Approve Hospital
+                </Button>
+              )}
+            </Card>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -1743,6 +2430,7 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [donorProfile, setDonorProfile] = useState<DonorProfile | null>(null);
+  const [hospitalProfile, setHospitalProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1759,6 +2447,9 @@ export default function App() {
             if (profile.role === 'donor') {
               const donorDoc = await getDoc(doc(db, 'donors', firebaseUser.uid));
               if (donorDoc.exists()) setDonorProfile(donorDoc.data() as DonorProfile);
+            } else if (profile.role === 'hospital') {
+              const hospitalDoc = await getDoc(doc(db, 'hospitals', firebaseUser.uid));
+              if (hospitalDoc.exists()) setHospitalProfile(hospitalDoc.data());
             }
           }
         } catch (error) {
@@ -1767,6 +2458,7 @@ export default function App() {
       } else {
         setUserProfile(null);
         setDonorProfile(null);
+        setHospitalProfile(null);
       }
       setLoading(false);
     });
@@ -1823,6 +2515,8 @@ export default function App() {
                         <DonorDashboard user={user} donorProfile={donorProfile} />
                       ) : userProfile?.role === 'admin' ? (
                         <AdminDashboard />
+                      ) : userProfile?.role === 'hospital' ? (
+                        <HospitalDashboard user={user} />
                       ) : (
                         <div className="text-center py-20">
                           <Droplets className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -1836,6 +2530,8 @@ export default function App() {
                     <Route path="/profile" element={
                       userProfile?.role === 'donor' ? (
                         <DonorProfilePage user={user} donorProfile={donorProfile} onUpdate={handleUpdateDonorProfile} />
+                      ) : userProfile?.role === 'hospital' ? (
+                        <HospitalProfilePage user={user} hospitalProfile={hospitalProfile} />
                       ) : <Navigate to="/" />
                     } />
                     <Route path="/schedule" element={
@@ -1846,6 +2542,11 @@ export default function App() {
                     <Route path="/donors" element={
                       userProfile?.role === 'admin' ? (
                         <DonorDirectory />
+                      ) : <Navigate to="/" />
+                    } />
+                    <Route path="/hospitals" element={
+                      userProfile?.role === 'admin' ? (
+                        <HospitalDirectory />
                       ) : <Navigate to="/" />
                     } />
                     <Route path="/messages" element={<MessagesPage user={user} />} />
