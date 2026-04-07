@@ -1,0 +1,9 @@
+{
+	"appId": "com.lifeline.bloodapp",
+	"appName": "LifeLine",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	},
+	"packageClassList": []
+}

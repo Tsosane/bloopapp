@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'hospital' | 'donor';
+export type UserRole = 'admin' | 'donor';
 
 export interface UserProfile {
   uid: string;
@@ -23,31 +23,9 @@ export interface DonorProfile {
   phoneNumber?: string;
 }
 
-export interface HospitalProfile {
-  userId: string;
-  name: string;
-  licenseNumber: string;
-  address: string;
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-  isApproved: boolean;
-}
-
-export interface BloodUnit {
-  id: string;
-  hospitalId: string;
-  bloodType: string;
-  quantity_ml: number;
-  collectionDate: string;
-  expiryDate: string;
-  status: 'available' | 'reserved' | 'used' | 'expired';
-}
-
 export interface BloodRequest {
   id: string;
-  hospitalId: string;
+  hospitalName: string;
   bloodType: string;
   quantity_ml: number;
   urgency: 'routine' | 'urgent' | 'emergency';
@@ -70,7 +48,6 @@ export interface Notification {
 export interface DonationAppointment {
   id: string;
   donorId: string;
-  hospitalId: string;
   hospitalName: string;
   scheduledAt: string;
   status: 'scheduled' | 'completed' | 'cancelled';
@@ -82,9 +59,17 @@ export interface DonationFeedback {
   appointmentId: string;
   donorId: string;
   donorName: string;
-  hospitalId: string;
   hospitalName: string;
   rating: number; // 1-5
   comment: string;
   createdAt: string;
+}
+
+export interface Message {
+  id: number;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
 }

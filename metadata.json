@@ -1,5 +1,5 @@
 {
-  "name": "Blood Suite",
-  "description": "A Smart Blood Bank and Donor Management System for Lesotho, featuring real-time inventory tracking, AI-powered demand forecasting, and donor mobilization.",
+  "name": "LifeLine Mobile",
+  "description": "A mobile blood donation suite for donors and administrators, powered by SQLite.",
   "requestFramePermissions": ["geolocation", "notifications"]
 }

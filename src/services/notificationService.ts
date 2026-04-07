@@ -1,6 +1,6 @@
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { BloodRequest, DonorProfile, HospitalProfile } from '../types';
+import { BloodRequest, DonorProfile } from '../types';
 
 // Helper to calculate distance in km between two points
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -20,7 +20,7 @@ export function deg2rad(deg: number) {
   return deg * (Math.PI / 180);
 }
 
-export async function broadcastUrgentRequest(request: BloodRequest, hospital: HospitalProfile) {
+export async function broadcastUrgentRequest(request: BloodRequest, hospitalLocation?: { latitude: number, longitude: number }) {
   try {
     // 1. Find matching donors
     const donorsRef = collection(db, 'donors');
@@ -38,10 +38,10 @@ export async function broadcastUrgentRequest(request: BloodRequest, hospital: Ho
       const donor = donorDoc.data() as DonorProfile;
       
       // 2. Filter by distance if both have locations
-      if (hospital.location && donor.location) {
+      if (hospitalLocation && donor.location) {
         const distance = calculateDistance(
-          hospital.location.latitude,
-          hospital.location.longitude,
+          hospitalLocation.latitude,
+          hospitalLocation.longitude,
           donor.location.latitude,
           donor.location.longitude
         );
@@ -58,15 +58,14 @@ export async function broadcastUrgentRequest(request: BloodRequest, hospital: Ho
       notifications.push(addDoc(collection(db, 'notifications'), {
         recipientId: donor.userId,
         title: `${urgencyLabel} BLOOD REQUEST: ${request.bloodType}`,
-        message: `${hospital.name} has an ${request.urgency} request for ${request.bloodType} blood. Your immediate donation could save a life.`,
+        message: `${request.hospitalName} has an ${request.urgency} request for ${request.bloodType} blood. Your immediate donation could save a life.`,
         type: 'emergency',
         priority: priority,
         isRead: false,
         createdAt: new Date().toISOString(),
         metadata: {
           requestId: request.id,
-          hospitalId: hospital.userId,
-          hospitalName: hospital.name,
+          hospitalName: request.hospitalName,
           bloodType: request.bloodType
         }
       }));
