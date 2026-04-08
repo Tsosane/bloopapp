@@ -1,5 +1,5 @@
 {
   "name": "LifeLine Mobile",
-  "description": "A mobile blood donation suite for donors and administrators, powered by SQLite.",
+  "description": "A mobile blood donation suite for donors and administrators, powered by Firebase.",
   "requestFramePermissions": ["geolocation", "notifications"]
 }

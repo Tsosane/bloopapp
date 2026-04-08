@@ -193,10 +193,10 @@ const Toast = ({ message, type = 'success', isVisible, onClose }: { message: str
 const BottomNav = ({ role }: { role: UserRole | null }) => {
   const location = useLocation();
   const navItems = [
-    { label: 'Home', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor', 'hospital'] },
-    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor', 'hospital'] },
+    { label: 'Home', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor'] },
+    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor'] },
     { label: 'Schedule', path: '/schedule', icon: Clock, roles: ['donor'] },
-    { label: 'Profile', path: '/profile', icon: User, roles: ['donor', 'hospital'] },
+    { label: 'Profile', path: '/profile', icon: User, roles: ['donor'] },
     { label: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
   ];
 
@@ -231,14 +231,14 @@ const Navbar = ({ user, role, onSignOut }: { user: FirebaseUser | null, role: Us
   const location = useLocation();
 
   const navItems = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor', 'hospital'] },
-    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor', 'hospital'] },
+    { label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor'] },
+    { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor'] },
     { label: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
     { label: 'Donors', path: '/donors', icon: User, roles: ['admin'] },
-    { label: 'Profile', path: '/profile', icon: User, roles: ['donor', 'hospital'] },
+    { label: 'Profile', path: '/profile', icon: User, roles: ['donor'] },
     { label: 'Schedule', path: '/schedule', icon: Clock, roles: ['donor'] },
     { label: 'History', path: '/history', icon: History, roles: ['donor'] },
-    { label: 'Notifications', path: '/notifications', icon: Bell, roles: ['admin', 'donor', 'hospital'] },
+    { label: 'Notifications', path: '/notifications', icon: Bell, roles: ['admin', 'donor'] },
   ];
 
   const filteredItems = navItems.filter(item => role && item.roles.includes(role));
@@ -307,7 +307,6 @@ const Navbar = ({ user, role, onSignOut }: { user: FirebaseUser | null, role: Us
 
 const Login = () => {
   const [view, setView] = useState<'login' | 'register'>('login');
-  const [regRole, setRegRole] = useState<'donor' | 'hospital'>('donor');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -317,8 +316,7 @@ const Login = () => {
     phoneNumber: '',
     bloodType: 'O+',
     location: '',
-    locationCoords: null as { latitude: number, longitude: number } | null,
-    hospitalAddress: ''
+    locationCoords: null as { latitude: number, longitude: number } | null
   });
 
   const requestLocation = () => {
@@ -343,13 +341,9 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = async (isRegistration = false, role: UserRole = 'donor') => {
+  const handleGoogleLogin = async (isRegistration = false) => {
     if (isRegistration) {
-      if (role === 'donor' && (!regData.fullName || !regData.phoneNumber)) {
-        setError("Please fill in all required fields.");
-        return;
-      }
-      if (role === 'hospital' && (!regData.fullName || !regData.hospitalAddress)) {
+      if (!regData.fullName || !regData.phoneNumber) {
         setError("Please fill in all required fields.");
         return;
       }
@@ -370,34 +364,23 @@ const Login = () => {
         await setDoc(doc(db, 'users', user.uid), {
           uid: user.uid,
           email: user.email,
-          role: role,
+          role: 'donor',
           displayName: isRegistration ? regData.fullName : user.displayName,
           photoURL: user.photoURL,
           createdAt: new Date().toISOString()
         });
 
-        if (role === 'donor') {
-          // Create donor profile
-          await setDoc(doc(db, 'donors', user.uid), {
-            userId: user.uid,
-            bloodType: isRegistration ? regData.bloodType : 'O+',
-            phoneNumber: isRegistration ? regData.phoneNumber : '',
-            locationName: isRegistration ? regData.location : '',
-            location: regData.locationCoords,
-            isEligible: true,
-            donationCount: 0,
-            createdAt: new Date().toISOString()
-          });
-        } else if (role === 'hospital') {
-          // Create hospital profile
-          await setDoc(doc(db, 'hospitals', user.uid), {
-            userId: user.uid,
-            name: isRegistration ? regData.fullName : user.displayName,
-            address: isRegistration ? regData.hospitalAddress : '',
-            isApproved: false, // Admin needs to approve
-            createdAt: new Date().toISOString()
-          });
-        }
+        // Create donor profile
+        await setDoc(doc(db, 'donors', user.uid), {
+          userId: user.uid,
+          bloodType: isRegistration ? regData.bloodType : 'O+',
+          phoneNumber: isRegistration ? regData.phoneNumber : '',
+          locationName: isRegistration ? regData.location : '',
+          location: regData.locationCoords,
+          isEligible: true,
+          donationCount: 0,
+          createdAt: new Date().toISOString()
+        });
       } else if (isRegistration) {
         setError("An account already exists for this email. Please sign in instead.");
         setView('login');
@@ -445,8 +428,8 @@ const Login = () => {
                 <p className="text-sm text-brand-100/60 font-bold uppercase tracking-widest">Donors</p>
               </div>
               <div>
-                <p className="text-3xl font-display font-bold mb-1">12+</p>
-                <p className="text-sm text-brand-100/60 font-bold uppercase tracking-widest">Hospitals</p>
+                <p className="text-3xl font-display font-bold mb-1">50+</p>
+                <p className="text-sm text-brand-100/60 font-bold uppercase tracking-widest">Partners</p>
               </div>
               <div>
                 <p className="text-3xl font-display font-bold mb-1">24/7</p>
@@ -522,104 +505,72 @@ const Login = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Role Switcher */}
-              <div className="flex p-1 bg-slate-100 rounded-2xl">
-                <button 
-                  onClick={() => setRegRole('donor')}
-                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${regRole === 'donor' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}
-                >
-                  Donor
-                </button>
-                <button 
-                  onClick={() => setRegRole('hospital')}
-                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${regRole === 'hospital' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}
-                >
-                  Hospital
-                </button>
-              </div>
-
-              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleGoogleLogin(true, regRole); }}>
+              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleGoogleLogin(true); }}>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                    {regRole === 'donor' ? 'Full Name' : 'Hospital Name'}
+                    Full Name
                   </label>
                   <input 
                     type="text" 
                     required
                     className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
-                    placeholder={regRole === 'donor' ? 'John Doe' : 'Maseru General Hospital'}
+                    placeholder="John Doe"
                     value={regData.fullName}
                     onChange={(e) => setRegData({...regData, fullName: e.target.value})}
                   />
                 </div>
 
-                {regRole === 'donor' ? (
-                  <>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                      <input 
-                        type="tel" 
-                        required
-                        className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
-                        placeholder="+266 5800 0000"
-                        value={regData.phoneNumber}
-                        onChange={(e) => setRegData({...regData, phoneNumber: e.target.value})}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Blood Type</label>
-                        <select 
-                          className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium appearance-none"
-                          value={regData.bloodType}
-                          onChange={(e) => setRegData({...regData, bloodType: e.target.value})}
-                        >
-                          {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
-                            <option key={type} value={type}>{type}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            className="flex-1 px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
-                            placeholder="Maseru"
-                            value={regData.location}
-                            onChange={(e) => setRegData({...regData, location: e.target.value})}
-                          />
-                          <button 
-                            type="button"
-                            onClick={requestLocation}
-                            className={`w-14 rounded-2xl border transition-all flex items-center justify-center ${regData.locationCoords ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'}`}
-                          >
-                            <MapPin className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    required
+                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                    placeholder="+266 5800 0000"
+                    value={regData.phoneNumber}
+                    onChange={(e) => setRegData({...regData, phoneNumber: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Hospital Address</label>
-                    <textarea 
-                      required
-                      rows={3}
-                      className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium resize-none"
-                      placeholder="123 Kingsway Road, Maseru"
-                      value={regData.hospitalAddress}
-                      onChange={(e) => setRegData({...regData, hospitalAddress: e.target.value})}
-                    />
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Blood Type</label>
+                    <select 
+                      className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium appearance-none"
+                      value={regData.bloodType}
+                      onChange={(e) => setRegData({...regData, bloodType: e.target.value})}
+                    >
+                      {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        className="flex-1 px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                        placeholder="Maseru"
+                        value={regData.location}
+                        onChange={(e) => setRegData({...regData, location: e.target.value})}
+                      />
+                      <button 
+                        type="button"
+                        onClick={requestLocation}
+                        className={`w-14 rounded-2xl border transition-all flex items-center justify-center ${regData.locationCoords ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'}`}
+                      >
+                        <MapPin className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
                 <Button 
                   type="submit"
                   className="w-full py-4 text-lg mt-4" 
                   disabled={loading}
                 >
-                  {loading ? 'Creating Account...' : `Register as ${regRole === 'donor' ? 'Donor' : 'Hospital'}`}
+                  {loading ? 'Creating Account...' : 'Register as Donor'}
                 </Button>
                 <button 
                   type="button"
@@ -658,19 +609,18 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
   useEffect(() => {
     if (!user) return;
     
-    const fetchData = async () => {
-      try {
-        const appointments = await api.getDonorAppointments(user.uid);
-        setHistory(appointments);
-        
-        // For notifications, we'll still use Firestore for now as it's already set up
-        // but in a real migration we'd move this to Postgres + WebSockets
-      } catch (err) {
-        console.error("Error fetching donor data:", err);
-      }
-    };
+    const appointmentsQ = query(
+      collection(db, 'appointments'),
+      where('donorId', '==', user.uid),
+      orderBy('scheduledAt', 'desc')
+    );
 
-    fetchData();
+    const unsubscribeAppointments = onSnapshot(appointmentsQ, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setHistory(data);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'appointments');
+    });
 
     const notifQ = query(
       collection(db, 'notifications'), 
@@ -699,6 +649,8 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
         }
         return newNotifs;
       });
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'notifications');
     });
 
     // Request notification permission
@@ -708,6 +660,7 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
 
     return () => {
       unsubscribeNotif();
+      unsubscribeAppointments();
     };
   }, [user]);
 
@@ -1601,10 +1554,34 @@ const DonorDirectory = () => {
   useEffect(() => {
     const fetchDonors = async () => {
       try {
-        const mergedData = await api.getDonors();
-        setDonors(mergedData);
+        const donorsSnap = await getDocs(collection(db, 'donors'));
+        const donorsData = donorsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+        
+        // Fetch user profiles for display names
+        const userPromises = donorsData.map(d => getDoc(doc(db, 'users', d.userId)));
+        const userSnaps = await Promise.all(userPromises);
+        const userMap = userSnaps.reduce((acc, snap) => {
+          if (snap.exists()) {
+            acc[snap.id] = snap.data();
+          }
+          return acc;
+        }, {} as any);
+
+        const merged = donorsData.map(d => ({
+          ...d,
+          displayName: userMap[d.userId]?.displayName || 'Unknown Donor',
+          email: userMap[d.userId]?.email || '',
+          distance: currentLocation && d.location ? calculateDistance(
+            currentLocation.latitude,
+            currentLocation.longitude,
+            d.location.latitude,
+            d.location.longitude
+          ) : undefined
+        }));
+
+        setDonors(merged);
       } catch (error) {
-        console.error("Error fetching donors:", error);
+        handleFirestoreError(error, OperationType.LIST, 'donors');
       } finally {
         setLoading(false);
       }
@@ -1734,7 +1711,6 @@ const DonorDirectory = () => {
 
 const AdminDashboard = () => {
   const [feedbacks, setFeedbacks] = useState<DonationFeedback[]>([]);
-  const [pendingHospitals, setPendingHospitals] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalDonors: 0,
     totalDonations: 0,
@@ -1752,10 +1728,6 @@ const AdminDashboard = () => {
       }
     });
 
-    const unsubHospitals = onSnapshot(query(collection(db, 'hospitals'), where('isApproved', '==', false)), (snapshot) => {
-      setPendingHospitals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
     // Fetch other stats
     const fetchStats = async () => {
       const donors = await getDocs(collection(db, 'donors'));
@@ -1769,7 +1741,7 @@ const AdminDashboard = () => {
     };
     fetchStats();
 
-    return () => { unsubFeedbacks(); unsubHospitals(); };
+    return () => { unsubFeedbacks(); };
   }, []);
 
   return (
@@ -1782,9 +1754,6 @@ const AdminDashboard = () => {
         <div className="flex gap-4">
           <Link to="/donors">
             <Button variant="outline">Manage Donors</Button>
-          </Link>
-          <Link to="/hospitals">
-            <Button variant="outline">Manage Hospitals</Button>
           </Link>
         </div>
       </header>
@@ -1826,31 +1795,8 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Pending Hospital Approvals */}
-        {pendingHospitals.length > 0 && (
-          <Card className="p-0 overflow-hidden border-none premium-shadow">
-            <div className="p-8 border-b border-slate-100 bg-amber-50/50 flex items-center justify-between">
-              <h2 className="text-2xl font-display font-extrabold text-slate-900">Pending Approvals</h2>
-              <Badge variant="warning">{pendingHospitals.length} Pending</Badge>
-            </div>
-            <div className="p-8 space-y-4">
-              {pendingHospitals.map(hospital => (
-                <div key={hospital.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-50 bg-white">
-                  <div>
-                    <p className="font-bold text-slate-900">{hospital.name}</p>
-                    <p className="text-xs text-slate-500">{hospital.address}</p>
-                  </div>
-                  <Link to="/hospitals">
-                    <Button size="sm">Review</Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-
         {/* Recent Donor Feedback */}
-        <Card className={`p-0 overflow-hidden border-none premium-shadow ${pendingHospitals.length === 0 ? 'lg:col-span-2' : ''}`}>
+        <Card className="p-0 overflow-hidden border-none premium-shadow lg:col-span-2">
           <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
             <h2 className="text-2xl font-display font-extrabold text-slate-900">Recent Donor Feedback</h2>
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
@@ -1921,27 +1867,34 @@ const AdminDashboard = () => {
 const MessagesPage = ({ user }: { user: FirebaseUser }) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pgStatus, setPgStatus] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const checkPg = async () => {
-      try {
-        const health = await api.getHealth();
-        setPgStatus(health.postgres);
-        if (health.postgres === 'connected') {
-          const msgs = await api.getMessages(user.uid);
-          setMessages(msgs);
-        }
-      } catch (err) {
-        console.error("Health check failed", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkPg();
+    const q = query(
+      collection(db, 'messages'),
+      where('senderId', 'in', [user.uid, 'system']),
+      where('recipientId', 'in', [user.uid, 'system']),
+      orderBy('createdAt', 'desc'),
+      limit(100)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter((msg: any) => 
+          (msg.senderId === user.uid && msg.recipientId === 'system') ||
+          (msg.senderId === 'system' && msg.recipientId === user.uid)
+        );
+      setMessages(data);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'messages');
+      setLoading(false);
+    });
+
+    return unsubscribe;
   }, [user.uid]);
 
   useEffect(() => {
@@ -1956,15 +1909,16 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
 
     setSending(true);
     try {
-      const msg = await api.sendMessage({
+      await addDoc(collection(db, 'messages'), {
         senderId: user.uid,
         recipientId: 'system',
-        content: newMessage
+        content: newMessage,
+        isRead: false,
+        createdAt: Timestamp.now()
       });
-      setMessages(prev => [msg, ...prev]);
       setNewMessage('');
     } catch (err) {
-      console.error("Failed to send message", err);
+      handleFirestoreError(err, OperationType.CREATE, 'messages');
     } finally {
       setSending(false);
     }
@@ -1976,26 +1930,6 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
       <p className="text-slate-400 font-medium">Loading conversation...</p>
     </div>
   );
-
-  if (pgStatus !== 'connected') {
-    return (
-      <div className="max-w-xl mx-auto py-12">
-        <Card className="p-12 text-center">
-          <div className="w-20 h-20 bg-amber-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-amber-100">
-            <DatabaseIcon className="w-10 h-10 text-amber-600" />
-          </div>
-          <h2 className="text-3xl font-display font-extrabold text-slate-900 mb-4 tracking-tight">Messaging Offline</h2>
-          <p className="text-slate-500 mb-8 leading-relaxed font-medium">
-            The secure messaging system requires a PostgreSQL connection which is currently unavailable in this preview. 
-            In a production environment, this connects to the main Lesotho Blood Bank system.
-          </p>
-          <div className="p-4 bg-slate-50 rounded-2xl text-xs font-mono text-slate-400 break-all border border-slate-100">
-            Status: {pgStatus}
-          </div>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)] flex flex-col pb-24 md:pb-0">
@@ -2024,7 +1958,7 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
         >
           {messages.length > 0 ? (
             messages.map((msg, i) => {
-              const isMe = msg.sender_id === user.uid;
+              const isMe = msg.senderId === user.uid;
               return (
                 <motion.div 
                   key={msg.id || i}
@@ -2041,7 +1975,7 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
                       {msg.content}
                     </div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">
-                      {isMe ? 'You' : 'System'} • {format(new Date(msg.created_at), 'HH:mm')}
+                      {isMe ? 'You' : 'System'} • {msg.createdAt?.toDate ? format(msg.createdAt.toDate(), 'HH:mm') : 'Just now'}
                     </span>
                   </div>
                 </motion.div>
@@ -2084,345 +2018,11 @@ const MessagesPage = ({ user }: { user: FirebaseUser }) => {
   );
 };
 
-const HospitalDashboard = ({ user }: { user: FirebaseUser }) => {
-  const [requests, setRequests] = useState<BloodRequest[]>([]);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [hospitalInfo, setHospitalInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [showRequestModal, setShowRequestModal] = useState(false);
+const HospitalDashboard = () => null;
 
-  useEffect(() => {
-    const fetchHospital = async () => {
-      const docRef = doc(db, 'hospitals', user.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) setHospitalInfo(docSnap.data());
-    };
+const HospitalProfilePage = () => null;
 
-    const unsubRequests = onSnapshot(query(collection(db, 'blood_requests'), where('hospitalName', '==', hospitalInfo?.name || ''), orderBy('createdAt', 'desc')), (snapshot) => {
-      setRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BloodRequest)));
-    });
-
-    const unsubAppointments = onSnapshot(query(collection(db, 'appointments'), where('hospitalId', '==', user.uid), orderBy('scheduledAt', 'asc')), (snapshot) => {
-      setAppointments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    fetchHospital().then(() => setLoading(false));
-    return () => { unsubRequests(); unsubAppointments(); };
-  }, [user.uid, hospitalInfo?.name]);
-
-  if (loading) return <div className="flex justify-center py-20"><RefreshCw className="w-8 h-8 text-brand-600 animate-spin" /></div>;
-
-  if (hospitalInfo && !hospitalInfo.isApproved) {
-    return (
-      <div className="max-w-xl mx-auto py-20">
-        <Card className="text-center p-12">
-          <div className="w-20 h-20 bg-amber-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-amber-100">
-            <Clock className="w-10 h-10 text-amber-600" />
-          </div>
-          <h2 className="text-3xl font-display font-extrabold text-slate-900 mb-4">Pending Approval</h2>
-          <p className="text-slate-500 font-medium leading-relaxed">
-            Your hospital account is currently being reviewed by the Lesotho Blood Bank administrators. 
-            You will receive a notification once your account is approved.
-          </p>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-10 pb-24 md:pb-0">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-display font-extrabold text-slate-900 tracking-tight">{hospitalInfo?.name}</h1>
-          <p className="text-slate-500 font-medium mt-1">Hospital Management Portal</p>
-        </div>
-        <Button onClick={() => setShowRequestModal(true)} className="md:w-auto w-full">
-          <Plus className="w-5 h-5" />
-          New Blood Request
-        </Button>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <Card className="p-0 overflow-hidden border-none premium-shadow">
-            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h2 className="text-2xl font-display font-extrabold text-slate-900">Active Requests</h2>
-              <Badge variant="info">{requests.length} Active</Badge>
-            </div>
-            <div className="p-8 space-y-4">
-              {requests.length > 0 ? requests.map((req, i) => (
-                <motion.div 
-                  key={req.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-center justify-between p-6 rounded-[2rem] border border-slate-50 hover:bg-slate-50/50 transition-all"
-                >
-                  <div className="flex items-center gap-6">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl ${
-                      req.urgency === 'emergency' ? 'bg-brand-50 text-brand-600' : 'bg-blue-50 text-blue-600'
-                    }`}>
-                      {req.bloodType}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 text-lg">{req.quantity_ml}ml Requested</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={req.urgency === 'emergency' ? 'danger' : req.urgency === 'urgent' ? 'warning' : 'info'}>
-                          {req.urgency}
-                        </Badge>
-                        <span className="text-xs text-slate-400 font-medium">• {format(new Date(req.createdAt), 'MMM dd, HH:mm')}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Badge variant={req.status === 'pending' ? 'warning' : 'success'}>{req.status}</Badge>
-                </motion.div>
-              )) : (
-                <div className="text-center py-20 text-slate-400">
-                  <Droplets className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p className="font-medium">No active blood requests.</p>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-
-        <div className="space-y-8">
-          <Card className="p-8">
-            <h3 className="text-xl font-display font-extrabold text-slate-900 mb-6 flex items-center gap-3">
-              <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600">
-                <Calendar className="w-5 h-5" />
-              </div>
-              Today's Appointments
-            </h3>
-            <div className="space-y-4">
-              {appointments.filter(a => format(new Date(a.scheduledAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).length > 0 ? (
-                appointments.filter(a => format(new Date(a.scheduledAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).map((app, i) => (
-                  <div key={app.id} className="p-4 rounded-2xl border border-slate-50 bg-slate-50/30">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="font-bold text-slate-900">{format(new Date(app.scheduledAt), 'HH:mm')}</p>
-                      <Badge variant="info">Scheduled</Badge>
-                    </div>
-                    <p className="text-sm text-slate-500 font-medium">Donor ID: {app.donorId.substring(0, 8)}...</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400 italic">No appointments for today.</p>
-              )}
-            </div>
-          </Card>
-
-          <Card className="p-8 bg-slate-900 text-white border-none">
-            <h3 className="text-xl font-display font-extrabold mb-6 flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-brand-400">
-                <Activity className="w-5 h-5" />
-              </div>
-              Inventory Status
-            </h3>
-            <div className="space-y-4">
-              {['A+', 'B+', 'O+', 'AB+'].map(type => (
-                <div key={type} className="flex items-center justify-between">
-                  <span className="font-bold text-slate-400">{type}</span>
-                  <div className="flex-1 mx-4 h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-500 rounded-full" style={{ width: `${Math.random() * 100}%` }} />
-                  </div>
-                  <span className="text-xs font-bold">Optimal</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Request Modal Placeholder */}
-      {showRequestModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowRequestModal(false)} />
-          <Card className="relative w-full max-w-lg p-8">
-            <h2 className="text-2xl font-display font-extrabold text-slate-900 mb-6">New Blood Request</h2>
-            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setShowRequestModal(false); }}>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Blood Type</label>
-                  <select className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-brand-500">
-                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Quantity (ml)</label>
-                  <input type="number" defaultValue="450" className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-brand-500" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Urgency</label>
-                <select className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-brand-500">
-                  <option value="routine">Routine</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="emergency">Emergency</option>
-                </select>
-              </div>
-              <div className="flex gap-4 pt-4">
-                <Button variant="secondary" className="flex-1" onClick={() => setShowRequestModal(false)}>Cancel</Button>
-                <Button type="submit" className="flex-1">Submit Request</Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const HospitalProfilePage = ({ user, hospitalProfile }: { user: FirebaseUser, hospitalProfile: any | null }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: hospitalProfile?.name || '',
-    address: hospitalProfile?.address || ''
-  });
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await updateDoc(doc(db, 'hospitals', user.uid), formData);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Update failed", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Hospital Profile</h1>
-        <Button 
-          variant={isEditing ? 'ghost' : 'outline'} 
-          onClick={() => setIsEditing(!isEditing)}
-        >
-          {isEditing ? 'Cancel' : 'Edit Profile'}
-        </Button>
-      </header>
-
-      <Card className="overflow-hidden">
-        <div className="bg-brand-600 h-24 -mx-6 -mt-6 mb-12 relative">
-          <div className="absolute -bottom-10 left-6">
-            <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center border-4 border-white">
-              {user.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full rounded-xl object-cover" referrerPolicy="no-referrer" />
-              ) : (
-                <HospitalIcon className="w-10 h-10 text-gray-300" />
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">{hospitalProfile?.name || user.displayName}</h2>
-            <p className="text-gray-500">{user.email}</p>
-          </div>
-
-          <div className="p-4 bg-gray-50 rounded-xl">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Status</p>
-            <Badge variant={hospitalProfile?.isApproved ? 'success' : 'warning'}>
-              {hospitalProfile?.isApproved ? 'Verified Hospital' : 'Pending Approval'}
-            </Badge>
-          </div>
-
-          {isEditing ? (
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-gray-100">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Hospital Name</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-500 outline-none"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Address</label>
-                <textarea 
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-500 outline-none"
-                  value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </form>
-          ) : (
-            <div className="space-y-4 pt-4 border-t border-gray-100">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Address</p>
-                  <p className="text-gray-900">{hospitalProfile?.address || 'Not set'}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-const HospitalDirectory = () => {
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'hospitals'), (snapshot) => {
-      setHospitals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    });
-    return unsub;
-  }, []);
-
-  const handleApprove = async (id: string) => {
-    await updateDoc(doc(db, 'hospitals', id), { isApproved: true });
-  };
-
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900">Hospital Directory</h1>
-        <p className="text-gray-500">Manage and approve hospital partners</p>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {hospitals.map(hospital => (
-          <div key={hospital.id}>
-            <Card className="p-6 h-full">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600">
-                  <HospitalIcon className="w-6 h-6" />
-                </div>
-                <Badge variant={hospital.isApproved ? 'success' : 'warning'}>
-                  {hospital.isApproved ? 'Approved' : 'Pending'}
-                </Badge>
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">{hospital.name}</h3>
-              <p className="text-sm text-slate-500 mb-4 flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" />
-                {hospital.address}
-              </p>
-              {!hospital.isApproved && (
-                <Button onClick={() => handleApprove(hospital.id)} className="w-full">
-                  Approve Hospital
-                </Button>
-              )}
-            </Card>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+const HospitalDirectory = () => null;
 
 // --- Main App ---
 
@@ -2430,7 +2030,6 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [donorProfile, setDonorProfile] = useState<DonorProfile | null>(null);
-  const [hospitalProfile, setHospitalProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -2447,9 +2046,6 @@ export default function App() {
             if (profile.role === 'donor') {
               const donorDoc = await getDoc(doc(db, 'donors', firebaseUser.uid));
               if (donorDoc.exists()) setDonorProfile(donorDoc.data() as DonorProfile);
-            } else if (profile.role === 'hospital') {
-              const hospitalDoc = await getDoc(doc(db, 'hospitals', firebaseUser.uid));
-              if (hospitalDoc.exists()) setHospitalProfile(hospitalDoc.data());
             }
           }
         } catch (error) {
@@ -2458,7 +2054,6 @@ export default function App() {
       } else {
         setUserProfile(null);
         setDonorProfile(null);
-        setHospitalProfile(null);
       }
       setLoading(false);
     });
@@ -2515,8 +2110,6 @@ export default function App() {
                         <DonorDashboard user={user} donorProfile={donorProfile} />
                       ) : userProfile?.role === 'admin' ? (
                         <AdminDashboard />
-                      ) : userProfile?.role === 'hospital' ? (
-                        <HospitalDashboard user={user} />
                       ) : (
                         <div className="text-center py-20">
                           <Droplets className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -2530,8 +2123,6 @@ export default function App() {
                     <Route path="/profile" element={
                       userProfile?.role === 'donor' ? (
                         <DonorProfilePage user={user} donorProfile={donorProfile} onUpdate={handleUpdateDonorProfile} />
-                      ) : userProfile?.role === 'hospital' ? (
-                        <HospitalProfilePage user={user} hospitalProfile={hospitalProfile} />
                       ) : <Navigate to="/" />
                     } />
                     <Route path="/schedule" element={
@@ -2542,11 +2133,6 @@ export default function App() {
                     <Route path="/donors" element={
                       userProfile?.role === 'admin' ? (
                         <DonorDirectory />
-                      ) : <Navigate to="/" />
-                    } />
-                    <Route path="/hospitals" element={
-                      userProfile?.role === 'admin' ? (
-                        <HospitalDirectory />
                       ) : <Navigate to="/" />
                     } />
                     <Route path="/messages" element={<MessagesPage user={user} />} />

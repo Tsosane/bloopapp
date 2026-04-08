@@ -127,6 +127,19 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["appointmentId", "donorId", "rating"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Direct messages between users and system.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "recipientId": { "type": "string" },
+        "content": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "recipientId", "content"]
     }
   },
   "firestore": {
@@ -137,6 +150,7 @@
     "/requests/{requestId}": { "schema": "BloodRequest", "description": "Blood requests from hospitals" },
     "/notifications/{notificationId}": { "schema": "Notification", "description": "User notifications" },
     "/appointments/{appointmentId}": { "schema": "Appointment", "description": "Scheduled donations" },
-    "/feedbacks/{feedbackId}": { "schema": "Feedback", "description": "Donor feedback" }
+    "/feedbacks/{feedbackId}": { "schema": "Feedback", "description": "Donor feedback" },
+    "/messages/{messageId}": { "schema": "Message", "description": "Direct messages" }
   }
 }
