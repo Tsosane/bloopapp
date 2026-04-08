@@ -60,7 +60,10 @@ import {
   MessageSquare,
   RefreshCw,
   Database as DatabaseIcon,
-  Send
+  Send,
+  Heart,
+  Zap,
+  Quote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -92,7 +95,6 @@ import {
 } from './types';
 import { forecastBloodDemand } from './services/geminiService';
 import { broadcastUrgentRequest, calculateDistance } from './services/notificationService';
-import { api } from './services/api';
 
 // --- Components ---
 
@@ -195,7 +197,7 @@ const BottomNav = ({ role }: { role: UserRole | null }) => {
   const navItems = [
     { label: 'Home', path: '/', icon: LayoutDashboard, roles: ['admin', 'donor'] },
     { label: 'Messages', path: '/messages', icon: MessageSquare, roles: ['admin', 'donor'] },
-    { label: 'Schedule', path: '/schedule', icon: Clock, roles: ['donor'] },
+    { label: 'Schedule', path: '/schedule', icon: Calendar, roles: ['donor'] },
     { label: 'Profile', path: '/profile', icon: User, roles: ['donor'] },
     { label: 'Admin', path: '/admin', icon: ShieldCheck, roles: ['admin'] },
   ];
@@ -205,22 +207,30 @@ const BottomNav = ({ role }: { role: UserRole | null }) => {
   if (!role) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50 pb-safe">
-      <div className="flex justify-around items-center h-20 px-2">
-        {filteredItems.map(item => (
-          <Link 
-            key={item.path} 
-            to={item.path}
-            className={`flex flex-col items-center gap-1.5 px-4 py-2 rounded-2xl transition-all duration-300 ${
-              location.pathname === item.path 
-                ? 'text-brand-600 bg-brand-50/50' 
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            <item.icon className={`w-6 h-6 ${location.pathname === item.path ? 'scale-110' : ''} transition-transform`} />
-            <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
-          </Link>
-        ))}
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-2xl border-t border-slate-100 z-50 pb-safe">
+      <div className="flex justify-around items-center h-20 px-4">
+        {filteredItems.map(item => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link 
+              key={item.path} 
+              to={item.path}
+              className={`relative flex flex-col items-center gap-1 px-4 py-2 transition-all duration-500 ${
+                isActive ? 'text-brand-600' : 'text-slate-400'
+              }`}
+            >
+              {isActive && (
+                <motion.div 
+                  layoutId="bottomNavTab"
+                  className="absolute inset-0 bg-brand-50 rounded-2xl -z-10"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <item.icon className={`w-6 h-6 ${isActive ? 'scale-110' : ''} transition-transform duration-500`} />
+              <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
@@ -244,40 +254,43 @@ const Navbar = ({ user, role, onSignOut }: { user: FirebaseUser | null, role: Us
   const filteredItems = navItems.filter(item => role && item.roles.includes(role));
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+    <nav className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform">
+            <Link to="/" className="flex items-center gap-4 group">
+              <div className="w-12 h-12 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:rotate-12 transition-transform">
                 <Droplets className="text-white w-7 h-7" />
               </div>
-              <span className="text-2xl font-display font-extrabold text-slate-900 tracking-tight">Blood<span className="text-brand-600">Suite</span></span>
+              <span className="text-2xl font-display font-black text-slate-900 tracking-tighter">LifeLine</span>
             </Link>
           </div>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-2">
-            {filteredItems.map(item => (
-              <Link 
-                key={item.path} 
-                to={item.path}
-                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                  location.pathname === item.path 
-                    ? 'text-brand-600 bg-brand-50' 
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </div>
-              </Link>
-            ))}
+            {filteredItems.map(item => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link 
+                  key={item.path} 
+                  to={item.path}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    isActive 
+                      ? 'text-brand-600 bg-brand-50' 
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </div>
+                </Link>
+              );
+            })}
             {user && (
               <div className="flex items-center gap-4 ml-4 pl-6 border-l border-slate-100">
                 <div className="text-right hidden lg:block">
-                  <p className="text-sm font-bold text-slate-900 leading-none mb-1">{user.displayName}</p>
+                  <p className="text-sm font-black text-slate-900 leading-none mb-1">{user.displayName}</p>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{role}</p>
                 </div>
                 <button onClick={onSignOut} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all">
@@ -452,90 +465,95 @@ const Login = () => {
           className="max-w-md w-full"
         >
           <div className="md:hidden text-center mb-12">
-            <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center shadow-xl shadow-brand-200 mx-auto mb-4">
+            <div className="w-20 h-20 bg-brand-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-brand-500/30 mx-auto mb-6">
               <Droplets className="text-white w-10 h-10" />
             </div>
-            <h1 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">BloodSuite</h1>
+            <h1 className="text-4xl font-display font-black text-slate-900 tracking-tighter">LifeLine</h1>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">Mission Control</p>
           </div>
 
-          <div className="mb-10">
-            <h2 className="text-4xl font-display font-extrabold text-slate-900 mb-3 tracking-tight">
-              {view === 'login' ? 'Welcome back' : 'Join the mission'}
+          <div className="mb-12">
+            <h2 className="text-5xl font-display font-black text-slate-900 mb-4 tracking-tighter leading-none">
+              {view === 'login' ? 'Welcome back.' : 'Join the mission.'}
             </h2>
-            <p className="text-slate-500 font-medium">
+            <p className="text-slate-500 font-medium text-lg">
               {view === 'login' 
-                ? 'Sign in to manage your donations and messages.' 
-                : 'Create your account and start saving lives today.'}
+                ? 'Sign in to manage your donations and track your impact.' 
+                : 'Create your identity and start saving lives in Lesotho.'}
             </p>
           </div>
 
           {error && (
-            <div className="bg-brand-50 text-brand-700 p-4 rounded-2xl mb-8 text-sm font-bold flex items-center gap-3 border border-brand-100">
-              <AlertTriangle className="w-5 h-5 shrink-0" />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-brand-50 text-brand-700 p-5 rounded-3xl mb-10 text-sm font-bold flex items-center gap-4 border border-brand-100"
+            >
+              <AlertTriangle className="w-6 h-6 shrink-0" />
               {error}
-            </div>
+            </motion.div>
           )}
 
           {view === 'login' ? (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <Button 
                 onClick={() => handleGoogleLogin(false)} 
-                className="w-full py-4 text-lg" 
+                className="w-full py-5 text-lg rounded-2xl shadow-xl shadow-brand-500/10" 
                 disabled={loading}
               >
-                <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
-                  <User className="w-4 h-4" />
+                <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center mr-2">
+                  <User className="w-5 h-5" />
                 </div>
-                {loading ? 'Authenticating...' : 'Continue with Google'}
+                {loading ? 'Connecting...' : 'Continue with Google'}
               </Button>
               
               <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"></span></div>
-                <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.2em]"><span className="bg-[#FAFAFA] px-4 text-slate-400">New to Blood Suite?</span></div>
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
+                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.3em]"><span className="bg-[#FAFAFA] px-6 text-slate-400">New to LifeLine?</span></div>
               </div>
 
               <Button 
                 variant="outline" 
                 onClick={() => setView('register')} 
-                className="w-full py-4"
+                className="w-full py-5 rounded-2xl border-slate-200 text-slate-600 hover:bg-slate-50"
                 disabled={loading}
               >
-                Create Account
+                Create Donor Account
               </Button>
             </div>
           ) : (
-            <div className="space-y-6">
-              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleGoogleLogin(true); }}>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                    Full Name
+            <div className="space-y-8">
+              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleGoogleLogin(true); }}>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Full Legal Name
                   </label>
                   <input 
                     type="text" 
                     required
-                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                    className="w-full px-6 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-bold text-slate-900"
                     placeholder="John Doe"
                     value={regData.fullName}
                     onChange={(e) => setRegData({...regData, fullName: e.target.value})}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Number</label>
                   <input 
                     type="tel" 
                     required
-                    className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                    className="w-full px-6 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-bold text-slate-900"
                     placeholder="+266 5800 0000"
                     value={regData.phoneNumber}
                     onChange={(e) => setRegData({...regData, phoneNumber: e.target.value})}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Blood Type</label>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Blood Type</label>
                     <select 
-                      className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium appearance-none"
+                      className="w-full px-6 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-bold text-slate-900 appearance-none"
                       value={regData.bloodType}
                       onChange={(e) => setRegData({...regData, bloodType: e.target.value})}
                     >
@@ -544,12 +562,12 @@ const Login = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
-                    <div className="flex gap-2">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Location</label>
+                    <div className="flex gap-3">
                       <input 
                         type="text" 
-                        className="flex-1 px-5 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                        className="flex-1 px-6 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-bold text-slate-900"
                         placeholder="Maseru"
                         value={regData.location}
                         onChange={(e) => setRegData({...regData, location: e.target.value})}
@@ -559,7 +577,7 @@ const Login = () => {
                         onClick={requestLocation}
                         className={`w-14 rounded-2xl border transition-all flex items-center justify-center ${regData.locationCoords ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'}`}
                       >
-                        <MapPin className="w-5 h-5" />
+                        <MapPin className="w-6 h-6" />
                       </button>
                     </div>
                   </div>
@@ -567,15 +585,15 @@ const Login = () => {
 
                 <Button 
                   type="submit"
-                  className="w-full py-4 text-lg mt-4" 
+                  className="w-full py-5 text-lg mt-6 rounded-2xl shadow-xl shadow-brand-500/20" 
                   disabled={loading}
                 >
-                  {loading ? 'Creating Account...' : 'Register as Donor'}
+                  {loading ? 'Creating Identity...' : 'Register as Donor'}
                 </Button>
                 <button 
                   type="button"
                   onClick={() => setView('login')} 
-                  className="w-full py-2 text-sm font-bold text-slate-400 hover:text-brand-600 transition-colors"
+                  className="w-full py-4 text-sm font-black text-slate-400 hover:text-brand-600 transition-colors uppercase tracking-widest"
                   disabled={loading}
                 >
                   Already have an account? Sign In
@@ -600,7 +618,6 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string, isVisible: boolean }>({ message: '', isVisible: false });
-  const [showMobileInfo, setShowMobileInfo] = useState(false);
 
   const showToast = (message: string) => {
     setToast({ message, isVisible: true });
@@ -687,208 +704,125 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
   };
 
   return (
-    <div className="space-y-8 pb-24 md:pb-0">
-      {/* Toast Notification */}
-      <Toast 
-        message={toast.message} 
-        isVisible={toast.isVisible} 
-        onClose={() => setToast({ ...toast, isVisible: false })} 
-      />
-
-      {/* Feedback Modal */}
-      <FeedbackModal 
-        isOpen={isFeedbackModalOpen} 
-        onClose={() => setIsFeedbackModalOpen(false)} 
-        appointment={selectedAppointment}
-        user={user}
-        onSuccess={showToast}
-      />
-
-      {/* Mobile Info Modal */}
-      <AnimatePresence>
-        {showMobileInfo && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMobileInfo(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white rounded-[2.5rem] p-8 max-w-lg w-full premium-shadow"
-            >
-              <button 
-                onClick={() => setShowMobileInfo(false)}
-                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-brand-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-200">
-                <Droplets className="text-white w-8 h-8" />
-              </div>
-              
-              <h2 className="text-3xl font-display font-extrabold text-slate-900 mb-4 tracking-tight">Run on your phone</h2>
-              <p className="text-slate-500 mb-8 leading-relaxed">
-                BloodSuite is a Progressive Web App (PWA) designed to work perfectly on mobile devices.
-              </p>
-              
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600">1</div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 mb-1">Open on mobile</h4>
-                    <p className="text-sm text-slate-500">Scan the QR code or open the shared URL in Safari (iOS) or Chrome (Android).</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600">2</div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 mb-1">Add to Home Screen</h4>
-                    <p className="text-sm text-slate-500">Tap the "Share" icon (iOS) or "Menu" (Android) and select <strong>"Add to Home Screen"</strong>.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600">3</div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 mb-1">Launch App</h4>
-                    <p className="text-sm text-slate-500">The app will now appear on your home screen and run in full-screen mode like a native app.</p>
-                  </div>
-                </div>
-              </div>
-              
-              <Button onClick={() => setShowMobileInfo(false)} className="w-full mt-10 py-4">
-                Got it!
-              </Button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Urgent Notifications Banner */}
-      {notifications.filter(n => !n.isRead && (n.priority === 'critical' || n.priority === 'high')).map(n => (
-        <motion.div 
-          key={n.id}
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          className={`p-5 rounded-[2rem] shadow-xl flex items-center justify-between gap-4 ${
-            n.priority === 'critical' ? 'bg-brand-600' : 'bg-orange-500'
-          } text-white premium-shadow`}
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl animate-pulse">
-              <AlertTriangle className="w-6 h-6" />
+    <div className="space-y-10 pb-12">
+      {/* Hero Header */}
+      <header className="relative overflow-hidden rounded-[3rem] bg-slate-900 text-white p-10 md:p-16">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-600/20 to-transparent pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-brand-400 text-xs font-bold uppercase tracking-widest">
+              <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+              Active Donor Status
             </div>
-            <div>
-              <h3 className="font-display font-bold text-lg">{n.title}</h3>
-              <p className="text-sm text-white/80 font-medium">{n.message}</p>
+            <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight">
+              Hello, <span className="text-brand-500">{user.displayName?.split(' ')[0]}</span>
+            </h1>
+            <p className="text-slate-400 text-lg md:text-xl max-w-xl leading-relaxed">
+              Your commitment saves lives. You've helped <span className="text-white font-bold">{(donorProfile?.donationCount || 0) * 3} people</span> through your donations.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-brand-600 rounded-[2.5rem] flex flex-col items-center justify-center shadow-2xl shadow-brand-500/20 rotate-3">
+              <Droplets className="w-8 h-8 md:w-10 md:h-10 text-white mb-1" />
+              <span className="text-2xl md:text-3xl font-display font-black">{donorProfile?.bloodType || '--'}</span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Link to="/schedule">
-              <Button variant="secondary" className="bg-white text-brand-600 hover:bg-brand-50 text-sm py-2 px-4">
-                Help Now
-              </Button>
-            </Link>
-            <button onClick={() => markAsRead(n.id!)} className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </motion.div>
-      ))}
-
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-display font-extrabold text-slate-900 tracking-tight">Hello, {user.displayName?.split(' ')[0]}!</h1>
-          <p className="text-slate-500 font-medium mt-1">
-            Your blood type: <span className="font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-lg">{donorProfile?.bloodType || 'Not set'}</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => window.location.reload()} 
-            className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all md:hidden"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
-          {isEligible ? (
-            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-100 font-bold text-sm">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              Eligible to Donate
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-2xl border border-amber-100 font-bold text-sm">
-              <Clock className="w-4 h-4" />
-              Next: {format(nextEligibleDate, 'MMM dd')}
-            </div>
-          )}
         </div>
       </header>
 
-      {/* Quick Actions - Bento Style */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link to="/schedule" className="bg-brand-600 p-6 rounded-[2rem] text-white shadow-xl shadow-brand-200 flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
-            <Calendar className="w-6 h-6" />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-8 border-none premium-shadow bg-white group hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 group-hover:scale-110 transition-transform">
+              <Activity className="w-7 h-7" />
+            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Donations</span>
           </div>
-          <span className="text-lg font-display font-bold">Schedule <br />Donation</span>
-        </Link>
-        <Link to="/messages" className="bg-white p-6 rounded-[2rem] text-slate-900 border border-slate-100 premium-shadow flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group">
-          <div className="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 group-hover:-rotate-12 transition-transform">
-            <MessageSquare className="w-6 h-6" />
+          <div className="space-y-1">
+            <h4 className="text-5xl font-display font-black text-slate-900">{donorProfile?.donationCount || 0}</h4>
+            <p className="text-slate-400 font-medium">Total successful drops</p>
           </div>
-          <span className="text-lg font-display font-bold">Messages <br />System</span>
-        </Link>
-        <button 
-          onClick={() => setShowMobileInfo(true)}
-          className="bg-slate-900 p-6 rounded-[2rem] text-white flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group"
-        >
-          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Droplets className="w-6 h-6 text-brand-400" />
+        </Card>
+
+        <Card className={`p-8 border-none premium-shadow transition-all group ${isEligible ? 'bg-emerald-500 text-white' : 'bg-white'}`}>
+          <div className="flex items-center justify-between mb-6">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${isEligible ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-600'}`}>
+              {isEligible ? <CheckCircle2 className="w-7 h-7" /> : <Clock className="w-7 h-7" />}
+            </div>
+            <span className={`text-[10px] font-bold uppercase tracking-widest ${isEligible ? 'text-white/60' : 'text-slate-400'}`}>Status</span>
           </div>
-          <span className="text-lg font-display font-bold text-left">Run on <br />Phone</span>
-        </button>
-        <Link to="/profile" className="bg-white p-6 rounded-[2rem] text-slate-900 border border-slate-100 premium-shadow flex flex-col items-start justify-between h-40 hover:scale-[1.02] transition-transform group">
-          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
-            <User className="w-6 h-6" />
+          <div className="space-y-1">
+            <h4 className={`text-4xl font-display font-black ${isEligible ? 'text-white' : 'text-slate-900'}`}>
+              {isEligible ? 'Eligible Now' : `${56 - daysSinceLastDonation} Days Left`}
+            </h4>
+            <p className={isEligible ? 'text-white/80' : 'text-slate-400'}>
+              {isEligible ? 'You can donate today' : `Next drop: ${format(nextEligibleDate, 'MMM dd')}`}
+            </p>
           </div>
-          <span className="text-lg font-display font-bold">My <br />Profile</span>
-        </Link>
+        </Card>
+
+        <Card className="p-8 border-none premium-shadow bg-white group hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+              <Star className="w-7 h-7" />
+            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rank</span>
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-4xl font-display font-black text-slate-900">
+              {donorProfile?.donationCount && donorProfile.donationCount >= 25 ? 'Legend' : 
+               donorProfile?.donationCount && donorProfile.donationCount >= 10 ? 'Hero' :
+               donorProfile?.donationCount && donorProfile.donationCount >= 5 ? 'Life Saver' : 'New Donor'}
+            </h4>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500 rounded-full" 
+                  style={{ width: `${((donorProfile?.donationCount || 0) % 5 / 5) * 100}%` }} 
+                />
+              </div>
+              <span className="text-[10px] font-bold text-slate-400">LVL {Math.floor((donorProfile?.donationCount || 0) / 5) + 1}</span>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="md:col-span-2">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-display font-extrabold flex items-center gap-3">
-              <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
-                <History className="w-5 h-5 text-brand-600" />
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Left Column: History */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center">
+                <History className="w-6 h-6" />
               </div>
-              Recent Donations
+              Recent Activity
             </h2>
-            <Button variant="ghost" className="text-sm font-bold">View All</Button>
+            <Button variant="ghost" className="text-brand-600 font-bold">View History</Button>
           </div>
-          
-          {history.length > 0 ? (
-            <div className="space-y-4">
-              {history.map((item, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-center justify-between p-5 rounded-3xl border border-slate-50 hover:bg-slate-50/50 hover:border-slate-100 transition-all group"
-                >
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Droplets className="w-7 h-7 text-brand-600" />
+
+          <div className="space-y-4">
+            {history.length > 0 ? history.map((item, i) => (
+              <motion.div 
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="group relative bg-white p-6 rounded-[2rem] border border-slate-100 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-500/5 transition-all"
+              >
+                <div className="flex items-center justify-between gap-6">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-brand-50 transition-colors">
+                      <Droplets className="w-8 h-8 text-slate-300 group-hover:text-brand-600 transition-colors" />
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900 text-lg leading-tight mb-1">{item.hospitalName}</p>
-                      <p className="text-sm text-slate-400 font-medium">{format(new Date(item.scheduledAt), 'MMMM dd, yyyy')}</p>
+                      <h4 className="text-xl font-bold text-slate-900 mb-1">{item.hospitalName}</h4>
+                      <div className="flex items-center gap-3 text-slate-400">
+                        <Calendar className="w-4 h-4" />
+                        <span className="text-sm font-medium">{format(new Date(item.scheduledAt), 'MMMM dd, yyyy')}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -897,128 +831,139 @@ const DonorDashboard = ({ user, donorProfile }: { user: FirebaseUser, donorProfi
                     </Badge>
                     {item.status === 'completed' && (
                       <button 
-                        className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all"
                         onClick={() => openFeedback(item)}
-                        title="Give Feedback"
+                        className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all"
                       >
-                        <Star className="w-5 h-5" />
+                        <Star className="w-6 h-6" />
                       </button>
                     )}
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-center">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Droplets className="w-10 h-10 text-slate-200" />
+                </div>
+              </motion.div>
+            )) : (
+              <div className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Droplets className="w-12 h-12 text-slate-200" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">No donations yet</h3>
+                <p className="text-slate-400 max-w-xs mx-auto mb-8">Your first donation will appear here once you've completed it.</p>
+                <Link to="/schedule">
+                  <Button className="px-8">Schedule Now</Button>
+                </Link>
               </div>
-              <p className="text-slate-400 font-medium">No donation history yet.</p>
-              <Link to="/schedule">
-                <Button variant="ghost" className="mt-2 text-brand-600 font-bold">Schedule your first donation</Button>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Sidebar */}
+        <div className="space-y-10">
+          {/* Quick Actions */}
+          <div className="space-y-6">
+            <h3 className="text-xl font-display font-extrabold text-slate-900 tracking-tight uppercase tracking-widest text-[10px] text-slate-400">Quick Actions</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <Link to="/schedule" className={`group p-6 rounded-[2rem] flex items-center gap-5 transition-all ${isEligible ? 'bg-brand-600 text-white shadow-xl shadow-brand-500/20' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isEligible ? 'bg-white/20' : 'bg-slate-200'}`}>
+                  <Plus className="w-7 h-7" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg">Schedule Drop</h4>
+                  <p className={`text-sm ${isEligible ? 'text-white/70' : 'text-slate-400'}`}>Book your next appointment</p>
+                </div>
+              </Link>
+              
+              <Link to="/messages" className="group p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-brand-200 hover:shadow-xl transition-all flex items-center gap-5">
+                <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 group-hover:scale-110 transition-transform">
+                  <MessageSquare className="w-7 h-7" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg text-slate-900">Messages</h4>
+                  <p className="text-sm text-slate-400">Chat with coordinators</p>
+                </div>
               </Link>
             </div>
-          )}
-        </Card>
+          </div>
 
-        <div className="space-y-8">
-          <Card className="p-8">
-            <h3 className="text-xl font-display font-extrabold flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+          {/* Achievements */}
+          <Card className="p-8 border-none premium-shadow bg-white">
+            <h3 className="text-xl font-display font-extrabold text-slate-900 mb-8 flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
+                <Star className="w-5 h-5 fill-amber-500" />
               </div>
-              Achievements
+              Badges
             </h3>
-            <div className="space-y-8">
-              <div className="flex flex-wrap gap-4">
-                {donorProfile?.donationCount && donorProfile.donationCount >= 1 && (
-                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 border border-brand-100 shadow-sm" title="First Drop">
-                    <Droplets className="w-7 h-7" />
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { icon: Droplets, title: 'First Drop', count: 1, color: 'brand' },
+                { icon: ShieldCheck, title: 'Life Saver', count: 5, color: 'blue' },
+                { icon: Star, title: 'Hero', count: 10, color: 'amber' },
+                { icon: Activity, title: 'Legend', count: 25, color: 'purple' },
+                { icon: Heart, title: 'Angel', count: 50, color: 'pink' },
+                { icon: Zap, title: 'Flash', count: 100, color: 'yellow' }
+              ].map((badge, i) => {
+                const isEarned = (donorProfile?.donationCount || 0) >= badge.count;
+                return (
+                  <motion.div 
+                    key={i}
+                    whileHover={isEarned ? { scale: 1.1, rotate: 5 } : {}}
+                    className={`aspect-square rounded-2xl flex items-center justify-center transition-all ${
+                      isEarned 
+                        ? `bg-${badge.color}-50 text-${badge.color}-600 border border-${badge.color}-100 shadow-sm` 
+                        : 'bg-slate-50 text-slate-200 border border-slate-100 opacity-50 grayscale'
+                    }`}
+                    title={badge.title}
+                  >
+                    <badge.icon className="w-8 h-8" />
                   </motion.div>
-                )}
-                {donorProfile?.donationCount && donorProfile.donationCount >= 5 && (
-                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm" title="Life Saver">
-                    <ShieldCheck className="w-7 h-7" />
-                  </motion.div>
-                )}
-                {donorProfile?.donationCount && donorProfile.donationCount >= 10 && (
-                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 border border-amber-100 shadow-sm" title="Hero">
-                    <Star className="w-7 h-7" />
-                  </motion.div>
-                )}
-                {donorProfile?.donationCount && donorProfile.donationCount >= 25 && (
-                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 border border-purple-100 shadow-sm" title="Legend">
-                    <Activity className="w-7 h-7" />
-                  </motion.div>
-                )}
-                {(!donorProfile?.donationCount || donorProfile.donationCount === 0) && (
-                  <p className="text-sm text-slate-400 italic leading-relaxed">Complete your first donation to earn exclusive badges!</p>
-                )}
-              </div>
-
-              {donorProfile?.donationCount !== undefined && (
-                <div className="space-y-3">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                    <span>Next Milestone</span>
-                    <span>{donorProfile.donationCount} / {donorProfile.donationCount < 1 ? 1 : donorProfile.donationCount < 5 ? 5 : donorProfile.donationCount < 10 ? 10 : 25}</span>
-                  </div>
-                  <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(donorProfile.donationCount / (donorProfile.donationCount < 1 ? 1 : donorProfile.donationCount < 5 ? 5 : donorProfile.donationCount < 10 ? 10 : 25)) * 100}%` }}
-                      className="h-full bg-brand-600 rounded-full shadow-lg shadow-brand-200"
-                    />
-                  </div>
-                </div>
-              )}
+                );
+              })}
             </div>
           </Card>
 
-          <Card className="p-8 bg-slate-900 text-white border-none">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-display font-extrabold flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-brand-400" />
-                </div>
+          {/* Recent Alerts */}
+          <Card className="p-8 border-none bg-slate-900 text-white">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-lg font-display font-extrabold flex items-center gap-3">
+                <Bell className="w-5 h-5 text-brand-400" />
                 Alerts
               </h3>
-              <Link to="/notifications" className="text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors uppercase tracking-widest">View All</Link>
+              <Link to="/notifications" className="text-[10px] font-bold text-brand-400 uppercase tracking-widest">View All</Link>
             </div>
             <div className="space-y-4">
-              {notifications.length > 0 ? notifications.map((n, i) => (
-                <div key={n.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
-                  <p className="text-sm font-bold mb-1 line-clamp-1">{n.title}</p>
-                  <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">{n.message}</p>
+              {notifications.length > 0 ? notifications.map(n => (
+                <div key={n.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-bold group-hover:text-brand-400 transition-colors">{n.title}</p>
+                    {n.priority === 'critical' && <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />}
+                  </div>
+                  <p className="text-xs text-white/50 line-clamp-2 leading-relaxed">{n.message}</p>
                 </div>
               )) : (
-                <p className="text-sm text-white/40 italic">No new notifications.</p>
+                <div className="text-center py-8">
+                  <p className="text-sm text-white/30 italic">No new alerts</p>
+                </div>
               )}
             </div>
           </Card>
         </div>
       </div>
 
-      <Card className="bg-gradient-to-br from-brand-600 to-brand-700 text-white border-none p-8 mt-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-display font-extrabold">Ready to save a life?</h2>
-            {isEligible ? (
-              <p className="text-brand-100 font-medium">There is currently a high demand for {donorProfile?.bloodType} blood in Maseru.</p>
-            ) : (
-              <p className="text-brand-100 font-medium">You will be eligible to donate again on {format(nextEligibleDate, 'MMMM dd, yyyy')}.</p>
-            )}
-          </div>
-          <Link to={isEligible ? "/schedule" : "#"}>
-            <Button 
-              variant="secondary" 
-              className={`bg-white text-brand-600 hover:bg-brand-50 px-8 py-4 text-lg font-bold ${!isEligible ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={!isEligible}
-            >
-              Schedule Donation
-            </Button>
-          </Link>
-        </div>
-      </Card>
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast.isVisible && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 bg-slate-900 text-white rounded-full shadow-2xl flex items-center gap-4"
+          >
+            <CheckCircle2 className="w-5 h-5 text-brand-500" />
+            <span className="font-bold text-sm tracking-wide">{toast.message}</span>
+            <button onClick={() => setToast({ ...toast, isVisible: false })} className="ml-4 text-white/40 hover:text-white transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -1104,18 +1049,20 @@ const ScheduleDonationPage = ({ user, donorProfile }: { user: FirebaseUser, dono
       : new Date();
 
     return (
-      <div className="max-w-md mx-auto py-12">
-        <Card className="text-center">
-          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8 text-amber-600" />
+      <div className="max-w-2xl mx-auto py-12 px-4">
+        <Card className="text-center p-12 premium-shadow border-none">
+          <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-8">
+            <Clock className="w-12 h-12 text-amber-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Not Eligible Yet</h2>
-          <p className="text-gray-600 mb-6">
-            You must wait at least 56 days between donations. You will be eligible again on 
-            <span className="font-bold text-red-600"> {format(nextEligibleDate, 'MMMM dd, yyyy')}</span>.
+          <h2 className="text-3xl font-display font-black text-slate-900 mb-4 tracking-tighter">Not Eligible Yet</h2>
+          <p className="text-slate-500 mb-8 leading-relaxed font-medium">
+            To ensure your safety and the quality of the blood supply, you must wait at least 56 days between donations. 
+            You will be eligible to save lives again on:
+            <br />
+            <span className="text-2xl font-black text-brand-600 mt-4 block"> {format(nextEligibleDate, 'MMMM dd, yyyy')}</span>
           </p>
           <Link to="/">
-            <Button variant="primary" className="w-full">Back to Dashboard</Button>
+            <Button variant="outline" className="w-full py-4 rounded-2xl font-bold">Return to Dashboard</Button>
           </Link>
         </Card>
       </div>
@@ -1123,72 +1070,76 @@ const ScheduleDonationPage = ({ user, donorProfile }: { user: FirebaseUser, dono
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-8 pb-32 md:pb-8">
       <AppointmentConfirmationModal 
         isOpen={showSuccessModal} 
         onClose={() => setShowSuccessModal(false)} 
         details={appointmentDetails} 
       />
       <header>
-        <h1 className="text-2xl font-bold text-gray-900">Schedule a Donation</h1>
-        <p className="text-gray-500">Choose a convenient time and location to save a life.</p>
+        <h1 className="text-4xl font-display font-black text-slate-900 tracking-tighter">Schedule</h1>
+        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">Book your next life-saving appointment</p>
       </header>
 
-      <Card>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <Card className="premium-shadow border-none p-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {error && (
-            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-brand-50 text-brand-700 rounded-2xl text-sm font-bold flex items-center gap-3 border border-brand-100"
+            >
+              <AlertTriangle className="w-5 h-5" />
               {error}
-            </div>
+            </motion.div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <HospitalIcon className="w-4 h-4 text-red-600" />
-                Select Blood Bank / Hospital
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <HospitalIcon className="w-4 h-4 text-brand-600" />
+                Select Donation Center
               </label>
               <select 
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-bold text-slate-900 appearance-none"
                 value={selectedHospital}
                 onChange={(e) => setSelectedHospital(e.target.value)}
               >
                 <option value="">Choose a location...</option>
                 {hospitals.length > 0 ? hospitals.map(hospital => (
                   <option key={hospital.userId} value={hospital.userId}>
-                    {hospital.name} - {hospital.address}
+                    {hospital.name} — {hospital.address}
                   </option>
                 )) : (
-                  <option disabled>No approved hospitals found</option>
+                  <option disabled>No approved centers found</option>
                 )}
               </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-red-600" />
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-brand-600" />
                   Preferred Date
                 </label>
                 <input 
                   type="date" 
                   required
                   min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-bold text-slate-900"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-red-600" />
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-brand-600" />
                   Preferred Time
                 </label>
                 <select 
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-bold text-slate-900 appearance-none"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                 >
@@ -1200,21 +1151,21 @@ const ScheduleDonationPage = ({ user, donorProfile }: { user: FirebaseUser, dono
             </div>
           </div>
 
-          <div className="p-4 bg-red-50 rounded-xl flex gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
-            <div className="text-sm text-red-800">
-              <p className="font-bold">Important Reminders:</p>
-              <ul className="list-disc list-inside mt-1 space-y-1">
-                <li>Eat a healthy meal before donating.</li>
-                <li>Drink plenty of water.</li>
-                <li>Bring a valid ID.</li>
-                <li>Ensure you have had enough sleep.</li>
+          <div className="p-6 bg-slate-900 rounded-3xl flex gap-4">
+            <AlertTriangle className="w-6 h-6 text-brand-400 shrink-0" />
+            <div className="text-sm text-slate-300 leading-relaxed">
+              <p className="font-black text-white uppercase tracking-widest text-[10px] mb-2">Pre-Donation Checklist</p>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                <li className="flex items-center gap-2">• Eat a healthy meal</li>
+                <li className="flex items-center gap-2">• Drink plenty of water</li>
+                <li className="flex items-center gap-2">• Bring valid ID</li>
+                <li className="flex items-center gap-2">• Get enough sleep</li>
               </ul>
             </div>
           </div>
 
-          <Button type="submit" className="w-full py-4 text-lg" disabled={loading}>
-            {loading ? 'Scheduling...' : 'Confirm Appointment'}
+          <Button type="submit" className="w-full py-5 rounded-2xl text-lg font-black shadow-xl shadow-brand-500/20" disabled={loading}>
+            {loading ? 'Processing...' : 'Schedule Appointment'}
           </Button>
         </form>
       </Card>
@@ -1250,126 +1201,150 @@ const DonorProfilePage = ({ user, donorProfile, onUpdate }: { user: FirebaseUser
   const isEligible = daysSinceLastDonation >= 56;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-8 pb-32 md:pb-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+        <div>
+          <h1 className="text-4xl font-display font-black text-slate-900 tracking-tighter">Profile</h1>
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">Manage your identity</p>
+        </div>
         <Button 
           variant={isEditing ? 'ghost' : 'outline'} 
           onClick={() => setIsEditing(!isEditing)}
+          className="rounded-xl font-bold"
         >
           {isEditing ? 'Cancel' : 'Edit Profile'}
         </Button>
       </header>
 
-      <Card className="overflow-hidden">
-        <div className="bg-red-600 h-24 -mx-6 -mt-6 mb-12 relative">
-          <div className="absolute -bottom-10 left-6">
-            <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center border-4 border-white">
+      <Card className="overflow-hidden p-0 border-none premium-shadow">
+        <div className="bg-brand-600 h-32 relative">
+          <div className="absolute -bottom-12 left-8">
+            <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center border-4 border-white overflow-hidden">
               {user.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full rounded-xl object-cover" referrerPolicy="no-referrer" />
+                <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
-                <User className="w-10 h-10 text-gray-300" />
+                <User className="w-12 h-12 text-slate-200" />
               )}
             </div>
           </div>
+          <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">Verified Donor</span>
+          </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="p-8 pt-16 space-y-8">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{user.displayName}</h2>
-            <p className="text-gray-500">{user.email}</p>
+            <h2 className="text-2xl font-display font-black text-slate-900">{user.displayName}</h2>
+            <p className="text-slate-400 font-medium">{user.email}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Blood Type</p>
-              <p className="text-2xl font-black text-red-600">{donorProfile?.bloodType}</p>
+            <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-2">Blood Type</p>
+              <p className="text-4xl font-display font-black text-brand-600">{donorProfile?.bloodType}</p>
             </div>
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Status</p>
-              <Badge variant={isEligible ? 'success' : 'warning'}>
+            <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col justify-between">
+              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-2">Status</p>
+              <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-center ${
+                isEligible ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+              }`}>
                 {isEligible ? 'Eligible' : 'Ineligible'}
-              </Badge>
+              </div>
             </div>
           </div>
 
           {isEditing ? (
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-gray-100">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input 
-                  type="tel" 
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                  value={formData.phoneNumber}
-                  onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
-                />
+            <form onSubmit={handleSubmit} className="space-y-6 pt-8 border-t border-slate-100">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                    value={formData.phoneNumber}
+                    onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
+                    placeholder="+266 ..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Primary Location</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all font-medium"
+                    value={formData.locationName}
+                    onChange={(e) => setFormData({...formData, locationName: e.target.value})}
+                    placeholder="Maseru, Lesotho"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                  value={formData.locationName}
-                  onChange={(e) => setFormData({...formData, locationName: e.target.value})}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Saving...' : 'Save Changes'}
+              <Button type="submit" className="w-full py-4 rounded-2xl shadow-lg shadow-brand-500/20" disabled={loading}>
+                {loading ? 'Saving Changes...' : 'Update Profile'}
               </Button>
             </form>
           ) : (
-            <div className="space-y-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-3 text-gray-600">
-                <MapPin className="w-5 h-5 text-gray-400" />
+            <div className="space-y-6 pt-8 border-t border-slate-100">
+              <div className="flex items-center gap-4 text-slate-600 font-medium">
+                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                  <MapPin className="w-5 h-5" />
+                </div>
                 <span>{donorProfile?.locationName || 'No location set'}</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Activity className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-4 text-slate-600 font-medium">
+                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                  <Activity className="w-5 h-5" />
+                </div>
                 <span>{donorProfile?.phoneNumber || 'No phone number set'}</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <History className="w-5 h-5 text-gray-400" />
-                <span>{donorProfile?.donationCount || 0} Total Donations</span>
+              <div className="flex items-center gap-4 text-slate-600 font-medium">
+                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                  <History className="w-5 h-5" />
+                </div>
+                <span>{donorProfile?.donationCount || 0} Successful Donations</span>
               </div>
             </div>
           )}
         </div>
       </Card>
 
-      <div className="md:hidden pt-4">
-        <Button 
-          variant="danger" 
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-red-100"
-          onClick={() => auth.signOut()}
-        >
-          <LogOut className="w-5 h-5" />
-          Sign Out
-        </Button>
-      </div>
-
-      <Card>
-        <h3 className="text-lg font-bold mb-4">Donation Eligibility</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Last Donation</span>
-            <span className="font-medium">{donorProfile?.lastDonationDate ? format(new Date(donorProfile.lastDonationDate), 'MMM dd, yyyy') : 'Never'}</span>
+      <Card className="premium-shadow border-none">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600">
+            <ShieldCheck className="w-6 h-6" />
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Next Eligible Date</span>
-            <span className="font-medium text-red-600">
+          <h3 className="text-xl font-display font-black text-slate-900">Donation Eligibility</h3>
+        </div>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Last Donation</span>
+            <span className="font-black text-slate-900">{donorProfile?.lastDonationDate ? format(new Date(donorProfile.lastDonationDate), 'MMM dd, yyyy') : 'Never'}</span>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-brand-50/50 rounded-2xl border border-brand-100">
+            <span className="text-brand-600 font-bold uppercase tracking-widest text-[10px]">Next Eligible Date</span>
+            <span className="font-black text-brand-600">
               {donorProfile?.lastDonationDate 
                 ? format(addDays(new Date(donorProfile.lastDonationDate), 56), 'MMM dd, yyyy')
-                : 'Now'}
+                : 'Available Now'}
             </span>
           </div>
-          <div className="p-4 bg-blue-50 rounded-lg flex gap-3">
-            <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0" />
-            <p className="text-sm text-blue-800">
-              Donors must wait at least 56 days between whole blood donations to ensure their own health and the quality of the blood.
+          <div className="p-6 bg-slate-900 rounded-3xl flex gap-4">
+            <AlertTriangle className="w-6 h-6 text-brand-400 shrink-0" />
+            <p className="text-sm text-slate-300 leading-relaxed">
+              To maintain your health and ensure high-quality blood supply, a minimum interval of <span className="text-white font-bold">56 days</span> is required between whole blood donations.
             </p>
           </div>
         </div>
       </Card>
+
+      <div className="md:hidden pt-4">
+        <Button 
+          variant="ghost" 
+          className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 text-slate-400 font-bold"
+          onClick={() => auth.signOut()}
+        >
+          <LogOut className="w-5 h-5" />
+          Sign Out of Session
+        </Button>
+      </div>
     </div>
   );
 };
@@ -1728,7 +1703,6 @@ const AdminDashboard = () => {
       }
     });
 
-    // Fetch other stats
     const fetchStats = async () => {
       const donors = await getDocs(collection(db, 'donors'));
       const appointments = await getDocs(query(collection(db, 'appointments'), where('status', '==', 'completed')));
@@ -1745,119 +1719,152 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <div className="space-y-10 pb-24 md:pb-0">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-display font-extrabold text-slate-900 tracking-tight">System Administration</h1>
-          <p className="text-slate-500 font-medium mt-1">Overview of Blood Suite operations and donor feedback</p>
-        </div>
-        <div className="flex gap-4">
-          <Link to="/donors">
-            <Button variant="outline">Manage Donors</Button>
-          </Link>
+    <div className="space-y-10 pb-12">
+      <header className="relative overflow-hidden rounded-[3rem] bg-slate-900 text-white p-10 md:p-16">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-brand-600/10 blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-brand-400 text-xs font-bold uppercase tracking-widest">
+              <ShieldCheck className="w-4 h-4" />
+              System Administrator
+            </div>
+            <h1 className="text-5xl md:text-6xl font-display font-extrabold tracking-tight">
+              Mission <span className="text-brand-500">Control</span>
+            </h1>
+            <p className="text-slate-400 text-lg max-w-xl leading-relaxed">
+              Real-time overview of the LifeLine network, donor engagement, and service quality metrics.
+            </p>
+          </div>
+          
+          <div className="flex gap-4">
+            <Link to="/donors">
+              <Button className="bg-white text-slate-900 hover:bg-slate-100 px-8 py-6 rounded-[2rem] font-bold text-lg shadow-2xl">
+                Manage Donors
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-8 hover:scale-[1.02] transition-transform group">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 group-hover:rotate-12 transition-transform">
-              <User className="w-8 h-8" />
+        <Card className="p-8 border-none premium-shadow bg-white group hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 group-hover:scale-110 transition-transform">
+              <User className="w-7 h-7" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Total Donors</p>
-              <p className="text-4xl font-display font-extrabold text-slate-900">{stats.totalDonors}</p>
-            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Network</span>
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-5xl font-display font-black text-slate-900">{stats.totalDonors}</h4>
+            <p className="text-slate-400 font-medium">Registered Donors</p>
           </div>
         </Card>
-        <Card className="p-8 hover:scale-[1.02] transition-transform group">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:-rotate-12 transition-transform">
-              <Droplets className="w-8 h-8" />
+
+        <Card className="p-8 border-none premium-shadow bg-white group hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+              <Droplets className="w-7 h-7" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Donations</p>
-              <p className="text-4xl font-display font-extrabold text-slate-900">{stats.totalDonations}</p>
-            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Impact</span>
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-5xl font-display font-black text-slate-900">{stats.totalDonations}</h4>
+            <p className="text-slate-400 font-medium">Successful Drops</p>
           </div>
         </Card>
-        <Card className="p-8 hover:scale-[1.02] transition-transform group">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
-              <Star className="w-8 h-8 fill-amber-500" />
+
+        <Card className="p-8 border-none premium-shadow bg-white group hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+              <Star className="w-7 h-7 fill-amber-500" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Avg Rating</p>
-              <p className="text-4xl font-display font-extrabold text-slate-900">{stats.avgRating.toFixed(1)}</p>
-            </div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quality</span>
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-5xl font-display font-black text-slate-900">{stats.avgRating.toFixed(1)}</h4>
+            <p className="text-slate-400 font-medium">Average Donor Rating</p>
           </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Donor Feedback */}
-        <Card className="p-0 overflow-hidden border-none premium-shadow lg:col-span-2">
-          <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h2 className="text-2xl font-display font-extrabold text-slate-900">Recent Donor Feedback</h2>
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
-              <MessageSquare className="w-4 h-4 text-brand-600" />
-              <span className="text-sm font-bold text-slate-600">{feedbacks.length} Responses</span>
+      <div className="grid grid-cols-1 gap-8">
+        <Card className="p-0 overflow-hidden border-none premium-shadow bg-white">
+          <div className="p-10 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <div className="space-y-1">
+              <h2 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">Donor Feedback</h2>
+              <p className="text-slate-400 font-medium">Latest reviews from the community</p>
+            </div>
+            <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm">
+              <MessageSquare className="w-5 h-5 text-brand-600" />
+              <span className="text-lg font-black text-slate-900">{feedbacks.length}</span>
             </div>
           </div>
-          <div className="p-8 space-y-6 max-h-[600px] overflow-y-auto custom-scrollbar">
+          
+          <div className="p-10 space-y-8 max-h-[800px] overflow-y-auto custom-scrollbar">
             {feedbacks.length > 0 ? feedbacks.map((f, i) => (
               <motion.div 
                 key={f.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="p-6 rounded-[2rem] border border-slate-50 hover:bg-slate-50/50 hover:border-slate-100 transition-all group"
+                className="group relative p-8 rounded-[2.5rem] border border-slate-50 hover:bg-slate-50/50 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-500/5 transition-all"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center font-display font-bold text-slate-500 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center font-display font-black text-2xl text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-all rotate-3 group-hover:rotate-0">
                       {f.donorName[0]}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900 text-lg leading-tight">{f.donorName}</p>
-                      <p className="text-sm text-slate-400 font-medium">at {f.hospitalName}</p>
+                      <h4 className="text-2xl font-bold text-slate-900 tracking-tight">{f.donorName}</h4>
+                      <p className="text-slate-400 font-medium flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        {f.hospitalName}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100">
+                  <div className="flex items-center gap-1 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100">
                     {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`w-3.5 h-3.5 ${f.rating >= s ? 'text-amber-500 fill-current' : 'text-amber-200'}`} />
+                      <Star key={s} className={`w-5 h-5 ${f.rating >= s ? 'text-amber-500 fill-current' : 'text-amber-200'}`} />
                     ))}
                   </div>
                 </div>
-                <div className="relative">
-                  <span className="absolute -left-2 -top-2 text-4xl text-slate-100 font-serif">"</span>
-                  <p className="text-slate-600 text-lg italic leading-relaxed pl-4 relative z-10">{f.comment}</p>
+                
+                <div className="relative bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                  <Quote className="absolute -left-3 -top-3 w-8 h-8 text-brand-200 rotate-180" />
+                  <p className="text-slate-600 text-xl italic leading-relaxed relative z-10">{f.comment}</p>
                 </div>
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{format(new Date(f.createdAt), 'MMM dd, yyyy • HH:mm')}</p>
-                  <button className="text-xs font-bold text-brand-600 hover:underline">Reply</button>
+                
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-widest">{format(new Date(f.createdAt), 'MMM dd, yyyy • HH:mm')}</span>
+                  </div>
+                  <Button variant="ghost" className="text-brand-600 font-bold hover:bg-brand-50 rounded-xl">
+                    Acknowledge
+                  </Button>
                 </div>
               </motion.div>
             )) : (
-              <div className="text-center py-20">
-                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-10 h-10 text-slate-200" />
+              <div className="text-center py-32">
+                <div className="w-32 h-32 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                  <MessageSquare className="w-16 h-16 text-slate-200" />
                 </div>
-                <p className="text-slate-400 font-medium">No feedback received yet.</p>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">No feedback yet</h3>
+                <p className="text-slate-400 max-w-xs mx-auto">Donor reviews will appear here as they come in.</p>
               </div>
             )}
           </div>
         </Card>
       </div>
 
-      <div className="md:hidden pt-8">
+      <div className="flex justify-center pt-10">
         <Button 
-          variant="outline" 
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 border-slate-200 text-slate-600"
+          variant="ghost" 
+          className="text-slate-400 hover:text-brand-600 font-bold flex items-center gap-3"
           onClick={() => auth.signOut()}
         >
           <LogOut className="w-5 h-5" />
-          Sign Out
+          Terminate Session
         </Button>
       </div>
     </div>
